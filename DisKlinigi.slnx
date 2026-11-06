@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/DisKlinigi.Core/DisKlinigi.Core.csproj" />
+    <Project Path="src/DisKlinigi.Web/DisKlinigi.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/DisKlinigi.Tests/DisKlinigi.Tests.csproj" />
+  </Folder>
+</Solution>

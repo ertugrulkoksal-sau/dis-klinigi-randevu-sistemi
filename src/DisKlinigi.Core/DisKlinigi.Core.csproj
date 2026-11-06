@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Alan modeli ve iş kuralları. Bilerek hiçbir altyapı paketine
+    (EF Core, ASP.NET Core) bağımlı değil; böylece kurallar veritabanı
+    ve web olmadan birim testleriyle sınanabiliyor.
+  -->
+
+</Project>

@@ -1,0 +1,32 @@
+﻿@model IReadOnlyList<DisKlinigi.Core.Domain.Branch>
+@{
+    ViewData["Title"] = "Ana Sayfa";
+}
+
+<h1 class="h3 mb-3">Şubelerimiz</h1>
+<p class="text-muted">
+    Bu sayfa proje iskeletinin uçtan uca çalıştığını gösteriyor: veriler ilk çalıştırmada
+    otomatik oluşturulan SQLite veritabanından okunuyor. Asıl ekranlar tasarım onayından sonra eklenecek.
+</p>
+
+<table class="table table-sm align-middle">
+    <thead>
+        <tr>
+            <th>Şube</th>
+            <th>İl</th>
+            <th>Adres</th>
+            <th class="text-end">Ünit sayısı</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var branch in Model)
+        {
+            <tr>
+                <td>@branch.Name</td>
+                <td>@branch.City</td>
+                <td>@branch.Address</td>
+                <td class="text-end">@branch.ChairCount</td>
+            </tr>
+        }
+    </tbody>
+</table>
