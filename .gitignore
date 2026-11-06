@@ -488,3 +488,6 @@ $RECYCLE.BIN/
 
 # macOS
 .DS_Store
+
+# Teslim paketi (scripts/teslim-zip.sh üretir)
+teslim/

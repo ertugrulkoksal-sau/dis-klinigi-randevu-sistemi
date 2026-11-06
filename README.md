@@ -19,36 +19,82 @@ Windows'a özgü hiçbir bileşen kullanılmıyor; proje macOS, Linux ve Windows
 
 ## Kurulum ve çalıştırma
 
-Gereken tek şey [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0).
+Gereken tek şey **.NET 10 SDK**. Veritabanı (SQLite) bir dosya olarak proje içinde
+oluşturulduğu için ayrı bir veritabanı sunucusu kurmaya gerek yok.
 
-### macOS
+### macOS (sunum bu adımlarla yapılıyor)
+
+**1. .NET 10 SDK'yı kurun** (bir kez yapılır). İki yoldan biri yeterli:
+
+- [dotnet.microsoft.com/download/dotnet/10.0](https://dotnet.microsoft.com/download/dotnet/10.0)
+  adresinden macOS **Installer** paketini indirip kurun. Apple Silicon (M1/M2/M3/M4) için
+  **Arm64**, Intel Mac için **x64** sürümünü seçin.
+- Homebrew kullanıyorsanız:
+
+  ```bash
+  brew install --cask dotnet-sdk
+  ```
+
+Kurulumdan sonra **yeni bir Terminal penceresi** açıp kontrol edin; listede `10.0.` ile
+başlayan bir sürüm görünmeli:
 
 ```bash
-# .NET 10 SDK yoksa (Homebrew ile):
-brew install --cask dotnet-sdk
+dotnet --list-sdks
+```
 
+**2. Projeyi alın.** GitHub'dan:
+
+```bash
 git clone https://github.com/ertugrulkoksal-sau/dis-klinigi-randevu-sistemi.git
 cd dis-klinigi-randevu-sistemi
+```
+
+Ya da teslim edilen .zip'i açıp Terminal'de o klasöre geçin
+(`cd ~/Downloads/dis-klinigi-randevu-sistemi` gibi).
+
+**3. Uygulamayı çalıştırın:**
+
+```bash
 dotnet run --project src/DisKlinigi.Web
 ```
 
-Tarayıcıda `http://localhost:5080` adresini açın.
+İlk çalıştırmada paketler indirildiği için bir dakika kadar sürebilir. Terminal'de
+`Now listening on: http://localhost:5080` satırı görününce tarayıcıda
+**http://localhost:5080** adresini açın. Durdurmak için Terminal'de `Ctrl + C`.
 
-### Windows / Linux
-
-Aynı komutlar geçerli: `dotnet run --project src/DisKlinigi.Web`.
-
-### İlk çalıştırmada ne oluyor?
-
-`src/DisKlinigi.Web/dis-klinigi.db` adında bir SQLite dosyası oluşturuluyor, şema
-migration'larla kuruluyor ve örnek veri (şubeler vb.) otomatik yükleniyor. Sıfırdan başlamak
-için uygulamayı kapatıp bu dosyayı silmek yeterli.
-
-### Testler
+**4. Testleri çalıştırın:**
 
 ```bash
 dotnet test
 ```
+
+#### macOS'te karşılaşılabilecek durumlar
+
+| Durum | Çözüm |
+|---|---|
+| `dotnet: command not found` | Kurulumdan sonra Terminal'i kapatıp yeniden açın. Hâlâ yoksa: `export PATH="$PATH:/usr/local/share/dotnet"` |
+| `address already in use` (5080 portu dolu) | Başka bir port verin: `dotnet run --project src/DisKlinigi.Web --urls http://localhost:5090` |
+| Örnek veriye sıfırdan dönmek | Uygulamayı durdurup `rm src/DisKlinigi.Web/dis-klinigi.db*` çalıştırın, sonra tekrar `dotnet run`. |
+| https sertifikası uyarısı | Görülmemesi gerekir; uygulama bilerek sadece http ile açılıyor (tasarım kararı K21). |
+
+### Windows / Linux
+
+Aynı komutlar geçerli: `dotnet run --project src/DisKlinigi.Web` ve `dotnet test`.
+
+### İlk çalıştırmada ne oluyor?
+
+`src/DisKlinigi.Web/dis-klinigi.db` adında bir SQLite dosyası oluşturuluyor, şema
+migration'larla kuruluyor ve örnek veri otomatik yükleniyor. Sonraki çalıştırmalarda
+mevcut veri korunuyor.
+
+### Teslim paketi
+
+```bash
+./scripts/teslim-zip.sh
+```
+
+Testleri çalıştırıp `teslim/dis-klinigi-randevu-sistemi.zip` dosyasını üretiyor. Pakete
+sadece git'teki dosyalar giriyor; `bin`, `obj` ve yerel veritabanı dışarıda kalıyor.
 
 ## Proje yapısı
 
@@ -61,6 +107,8 @@ tests/
 docs/
   tasarim.md           Alan modeli, iş kuralları, tasarım kararları ve alternatifleri
   gunluk-plan.md       6–15 Kasım çalışma planı
+scripts/
+  teslim-zip.sh        SABİS'e yüklenecek .zip'i üretir
 ```
 
 ## Ödev maddelerinin karşılandığı yerler
