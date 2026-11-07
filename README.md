@@ -7,7 +7,8 @@ koltuğu (ünit) çakışmalarını kontrol ediyor; tedavi randevuları hekim ya
 onayından geçiyor.
 
 > Proje geliştirme aşamasında. Günlük ilerleme için [docs/gunluk-plan.md](docs/gunluk-plan.md),
-> alan modeli ve tasarım kararları için [docs/tasarim.md](docs/tasarim.md).
+> alan modeli ve tasarım kararları için [docs/tasarim.md](docs/tasarim.md), ekran tasarımları
+> için [docs/arayuz-tasarimi.md](docs/arayuz-tasarimi.md).
 
 ## Teknolojiler
 
@@ -106,6 +107,7 @@ tests/
   DisKlinigi.Tests/    Core için birim testleri
 docs/
   tasarim.md           Alan modeli, iş kuralları, tasarım kararları ve alternatifleri
+  arayuz-tasarimi.md   Ekran tasarımlarının bağlantısı ve onay durumu
   gunluk-plan.md       6–15 Kasım çalışma planı
 scripts/
   teslim-zip.sh        SABİS'e yüklenecek .zip'i üretir
@@ -118,17 +120,17 @@ Tablo proje ilerledikçe dolduruluyor; "Durum" sütunu o maddenin hangi gün tam
 | Ödev maddesi | Sistemde karşılığı | Durum |
 |---|---|---|
 | Tek klinik ve çok şubeli kuruluş desteği | Zincir → şube modeli; tek klinik = tek şubeli zincir (tasarım K7) | İskelet: `Branch` (6 Kas) |
-| Klinikler yetki çerçevesinde tanımlanır | Zincir yöneticisi tüm şubeleri, şube yöneticisi sadece kendi şubesini yönetir (K3) | Planlandı (7, 14 Kas) |
-| Çalışma saatleri ve bölümler | Şubenin haftalık çalışma saatleri, şubenin barındırdığı bölümler | Planlandı (7 Kas) |
-| Hizmetler süre ve ücretiyle | `Service`: süre, ücret, onay gereksinimi | Planlandı (7 Kas) |
-| Doktor ve sağlık personeli kaydı | `Dentist`, `Assistant` (kullanıcı hiyerarşisi) | Planlandı (7 Kas) |
-| Doktorun uzmanlık alanı ve verdiği hizmetler | Hekimin uzmanlık bölümü ve hizmet listesi | Planlandı (7 Kas) |
-| Müsaitlik aralıkları; randevu sadece bu aralıklara | Şube bazlı haftalık müsaitlik + `DentistAvailabilityRule` | Planlandı (7, 9 Kas) |
+| Klinikler yetki çerçevesinde tanımlanır | Zincir yöneticisi tüm şubeleri, şube yöneticisi sadece kendi şubesini yönetir (K3); `User.CanManageBranch` her rolde ayrı cevaplanıyor | Alan modeli ve testleri (7 Kas); ekran 14 Kas |
+| Çalışma saatleri ve bölümler | `Branch.SetWorkingHours` / `IsOpenDuring`, `Branch.AddDepartment`; saatler `TimeOfDayRange` değer nesnesiyle (K22) | Alan modeli ve testleri (7 Kas) |
+| Hizmetler süre ve ücretiyle | `Service`: süre (5 dk katı, en fazla 240 dk), ücret, onay gereksinimi (K2, K25) | Alan modeli ve testleri (7 Kas) |
+| Doktor ve sağlık personeli kaydı | Soyut `User` sınıfından türeyen `Dentist`, `Assistant` (K14) | Alan modeli ve testleri (7 Kas); ekran 14 Kas |
+| Doktorun uzmanlık alanı ve verdiği hizmetler | `Dentist.Specialty`, `Dentist.OfferService` / `Offers`, çalıştığı şubeler | Alan modeli ve testleri (7 Kas) |
+| Müsaitlik aralıkları; randevu sadece bu aralıklara | `Dentist.AddAvailability` (şube saatine sığma, kesişme kontrolü), `Dentist.IsAvailable` (K8, K24); kural sınıfı 9 Kas | Alan modeli ve testleri (7 Kas); kural 9 Kas |
 | Personel ve hizmet seçerek randevu | Şube → bölüm → hizmet → hekim → saat akışı | Planlandı (12 Kas) |
 | Çakışma kontrolü | `IBookingRule` kuralları + `AppointmentScheduler` | Planlandı (9 Kas) |
 | Randevu detaylarının kaydı | Randevuda hizmet, süre, ücret, hekim, şube, tarih/saat (K9) | Planlandı (8 Kas) |
 | Onay mekanizması | Hizmete göre otomatik/manuel onay, State deseni (K2, K13) | Planlandı (8–9, 13 Kas) |
-| Roller: Hasta, Doktor/Personel, Yönetici | Hasta, Hekim, Asistan, Şube Yöneticisi, Zincir Yöneticisi (K14) | Planlandı (7, 11 Kas) |
+| Roller: Hasta, Doktor/Personel, Yönetici | `Patient`, `Dentist`, `Assistant`, `BranchManager`, `ChainAdministrator` (K14) | Sınıflar (7 Kas); giriş 11 Kas |
 
 README'nin son halinde (15 Kasım) UML sınıf ve sıra diyagramları, SOLID eşleme tablosu
 ve tasarım kararlarının özeti de yer alacak.
