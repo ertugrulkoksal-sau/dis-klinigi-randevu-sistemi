@@ -253,6 +253,46 @@ macOS'te https geliştirme sertifikası ayrıca güvenilir yapılmayı gerektiri
 (`dotnet dev-certs https --trust`). Sunumda sorun çıkmasın diye uygulama `http://localhost:5080`
 adresinde açılıyor.
 
+### Alan modelini kodlarken verilen kararlar (7 Kasım)
+
+**K22 – İki ayrı zaman aralığı tipi: `TimeRange` ve `TimeOfDayRange`.**
+`TimeRange` takvimde belirli bir aralık (10 Kasım 11:00–12:00), `TimeOfDayRange` ise
+tarihten bağımsız, her hafta tekrar eden bir saat kalıbı (Salı 09:00–13:00). İkisi de
+değiştirilemez değer nesnesi (record), ikisi de yarı açık ve geçersiz hali (bitiş ≤ başlangıç)
+oluşturulamıyor. Kalıp, `On(tarih)` ile belirli bir güne yerleştirilip takvimdeki aralıkla
+karşılaştırılıyor; şube saati ve hekim müsaitliği kontrolleri aynı `Covers` metodunu kullanıyor.
+*Alternatif:* tek tip ve "günün başından itibaren dakika" gibi sayılar. Daha az sınıf olurdu
+ama "bu sayı tarih mi saat mi?" karışıklığı her yerde kontrol gerektirirdi.
+
+**K23 – "Aynı kayıt mı?" sorusu `Entity.IsSameAs` ile soruluyor.**
+Şubenin bölüm listesi, hekimin şubeleri ve şube yöneticisinin yetkisi gibi yerlerde iki
+nesnenin aynı kayıt olup olmadığını bilmek gerekiyor. Önce referansa, Id atanmışsa Id'ye
+bakılıyor; kaydedilmemiş iki nesnenin Id'si 0 olduğu için sadece Id karşılaştırması yanlış
+sonuç verirdi. *Alternatif:* `Equals`/`GetHashCode`'u ezmek. Id kayıttan sonra değiştiği
+için hash değeri de değişir ve nesne bir `HashSet` içindeyse bulunamaz hale gelir; bu yüzden
+açık isimli ayrı bir metot tercih ettim.
+
+**K24 – Müsaitlik aralığı eklemenin kuralları hekim sınıfında.**
+Aralık sadece `Dentist.AddAvailability` ile eklenebiliyor ve üç şey kontrol ediliyor:
+hekim o şubeye atanmış mı, aralık şubenin o günkü çalışma saatine tamamen sığıyor mu,
+hekimin aynı gündeki başka bir aralığıyla (hangi şubede olursa olsun) kesişiyor mu.
+Uç uca aralıklar serbest (sabah Serdivan 09:00–13:00, öğleden sonra Kadıköy 13:00–18:00);
+şubeler arası yol süresi hesaba katılmıyor. Uç uca aralıklar birleştirilmiyor, bu yüzden
+iki aralığa bölünen bir randevu (12:30–13:30) kabul edilmiyor. Müsaitlik aralığı olan
+şubeden hekim çıkarılamıyor. Şube çalışma saati sonradan daraltılırsa dışarıda kalan
+aralıklar şube sınıfının göremediği bir şey; bu kontrol yönetici paneli gününde (14 Kasım)
+servis katmanında yapılacak.
+
+**K25 – Hizmet süresi 5 dakikanın katı, en fazla 240 dakika.**
+Boş saatler çeyrek saatlik adımlarla üretilecek (arayüz tasarımında önerildi), bu yüzden
+daha ince süreye gerek yok; 4 saatten uzun işlemler gerçekte birkaç seansa bölünüyor.
+Ücret negatif olamıyor, ücretsiz (0 ₺) hizmet tanımlanabiliyor.
+
+**Not:** `CanApprove` ve `CanCancel` yetki metotları randevu sınıfına ihtiyaç duyduğu için
+8 Kasım'da randevu durumlarıyla birlikte ekleniyor. Bugün eklenen alan sınıfları (çalışma
+saatleri, bölümler, hizmetler, kullanıcılar) henüz veritabanına eşlenmedi; `AppDbContext`
+bunları 10 Kasım'daki veritabanı adımına kadar görmezden geliyor, bu yüzden bugün migration yok.
+
 ## 5. İlk sınıf taslağı
 
 Bu taslak 7–9 Kasım'da kodlanacak; README'deki son diyagram koddan çıkarılacak.
@@ -339,7 +379,8 @@ classDiagram
 
 ## 6. Ekranlar
 
-Ekranlar kod yazılmadan önce tasarım kanvasında çizilip onaylanacak (7 Kasım):
+Ekranlar kod yazılmadan önce tasarım kanvasında çizildi (7 Kasım) ve onaya sunuldu.
+Kanvas bağlantısı, ekranların ayrıntılı listesi ve onay durumu: [arayuz-tasarimi.md](arayuz-tasarimi.md).
 
 1. Giriş ve hasta kaydı
 2. Hasta: randevu alma akışı (şube → bölüm → hizmet → hekim → tarih/saat → özet ve onay)

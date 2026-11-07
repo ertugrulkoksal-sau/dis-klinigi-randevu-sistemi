@@ -24,6 +24,11 @@ public class AppDbContext : DbContext
             b.Property(x => x.City).HasMaxLength(50).IsRequired();
             b.Property(x => x.Address).HasMaxLength(250);
             b.HasIndex(x => x.Name).IsUnique();
+
+            // Çalışma saatleri ve bölümler alan modelinde var ama tablolara eşlenmeleri
+            // veritabanı adımında (10 Kasım) yapılacak; o zamana kadar EF Core bunları görmüyor.
+            b.Ignore(x => x.WorkingHours);
+            b.Ignore(x => x.Departments);
         });
     }
 }
