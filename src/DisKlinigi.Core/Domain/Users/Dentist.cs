@@ -1,3 +1,5 @@
+using DisKlinigi.Core.Domain.Appointments;
+
 namespace DisKlinigi.Core.Domain.Users;
 
 /// <summary>
@@ -39,6 +41,12 @@ public class Dentist : User
 
     /// <summary>Hekim şube ayarlarını yönetmez; kendi müsaitliğini ve randevularını yönetir.</summary>
     public override bool CanManageBranch(Branch branch) => false;
+
+    /// <summary>Hekim sadece kendi randevularını onaylar; başka hekimin hastası hakkında karar vermez.</summary>
+    public override bool CanApprove(Appointment appointment) => appointment.Dentist.IsSameAs(this);
+
+    /// <summary>Hekim kendi randevusunu, son 24 saat dahil, iptal edebilir.</summary>
+    public override bool CanCancel(Appointment appointment, DateTime now) => appointment.Dentist.IsSameAs(this);
 
     public void ChangeSpecialty(Department specialty)
     {

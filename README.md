@@ -127,10 +127,11 @@ Tablo proje ilerledikçe dolduruluyor; "Durum" sütunu o maddenin hangi gün tam
 | Doktorun uzmanlık alanı ve verdiği hizmetler | `Dentist.Specialty`, `Dentist.OfferService` / `Offers`, çalıştığı şubeler | Alan modeli ve testleri (7 Kas) |
 | Müsaitlik aralıkları; randevu sadece bu aralıklara | `Dentist.AddAvailability` (şube saatine sığma, kesişme kontrolü), `Dentist.IsAvailable` (K8, K24); kural sınıfı 9 Kas | Alan modeli ve testleri (7 Kas); kural 9 Kas |
 | Personel ve hizmet seçerek randevu | Şube → bölüm → hizmet → hekim → saat akışı | Planlandı (12 Kas) |
-| Çakışma kontrolü | `IBookingRule` kuralları + `AppointmentScheduler` | Planlandı (9 Kas) |
-| Randevu detaylarının kaydı | Randevuda hizmet, süre, ücret, hekim, şube, tarih/saat (K9) | Planlandı (8 Kas) |
-| Onay mekanizması | Hizmete göre otomatik/manuel onay, State deseni (K2, K13) | Planlandı (8–9, 13 Kas) |
-| Roller: Hasta, Doktor/Personel, Yönetici | `Patient`, `Dentist`, `Assistant`, `BranchManager`, `ChainAdministrator` (K14) | Sınıflar (7 Kas); giriş 11 Kas |
+| Çakışma kontrolü | `IBookingRule` kuralları + `AppointmentScheduler`; "aktif randevu" tanımı `Appointment.IsActive` (K5) | Aktif randevu tanımı (8 Kas); kurallar 9 Kas |
+| Randevu detaylarının kaydı | `Appointment`: hasta, hekim, şube, `TimeRange` ile başlangıç/bitiş; hizmet adı ve ücreti randevu anındaki haliyle kopyalanıyor (K9, K30) | Alan modeli ve testleri (8 Kas); veritabanı 10 Kas |
+| Onay mekanizması | Hizmete göre ilk durum (K2); State deseniyle Onay bekliyor → Onaylandı / Reddedildi, geçersiz geçiş hata veriyor (K13, K26, K28); onay yetkisi `User.CanApprove` (K27) | Alan modeli + 30 hücrelik geçiş tablosu testi (8 Kas); ekran 13 Kas |
+| Randevu iptali (hasta için 24 saat kuralı) | `Appointment.Cancel`, `User.CanCancel`; hasta 24 saatten fazla kala, personel her zaman (başlamadan önce) iptal eder (K4, K29) | Alan modeli ve sınır testleri (8 Kas); ekran 12–13 Kas |
+| Roller: Hasta, Doktor/Personel, Yönetici | `Patient`, `Dentist`, `Assistant`, `BranchManager`, `ChainAdministrator` (K14); randevu yetkileri her sınıfta ayrı (`CanApprove`, `CanCancel`) | Sınıflar (7 Kas); randevu yetkileri (8 Kas); giriş 11 Kas |
 
 README'nin son halinde (15 Kasım) UML sınıf ve sıra diyagramları, SOLID eşleme tablosu
 ve tasarım kararlarının özeti de yer alacak.

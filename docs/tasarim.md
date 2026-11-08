@@ -85,6 +85,10 @@ fırlatıyor ve birim testleriyle sınanıyor.
 Daha geç iptali sadece klinik personeli (hekim, asistan, yönetici) yapabilir; çünkü
 son dakika iptallerinde boşalan ünitin başka hastaya verilmesi personelin işi.
 
+**Saati gelen randevu:** Başlama anından itibaren randevu iptal edilemiyor ve onaylanamıyor.
+Onaylı randevu Tamamlandı ya da Gelmedi olarak, hâlâ onay bekleyen randevu ise ret ile
+kapatılıyor (K28).
+
 ## 3. Çakışma kontrolü (sistemin asıl iş kuralı)
 
 Randevu oluşturulurken aşağıdaki kuralların **hepsi** kontrol ediliyor ve çiğnenen
@@ -289,9 +293,65 @@ daha ince süreye gerek yok; 4 saatten uzun işlemler gerçekte birkaç seansa b
 Ücret negatif olamıyor, ücretsiz (0 ₺) hizmet tanımlanabiliyor.
 
 **Not:** `CanApprove` ve `CanCancel` yetki metotları randevu sınıfına ihtiyaç duyduğu için
-8 Kasım'da randevu durumlarıyla birlikte ekleniyor. Bugün eklenen alan sınıfları (çalışma
-saatleri, bölümler, hizmetler, kullanıcılar) henüz veritabanına eşlenmedi; `AppDbContext`
-bunları 10 Kasım'daki veritabanı adımına kadar görmezden geliyor, bu yüzden bugün migration yok.
+8 Kasım'da randevu durumlarıyla birlikte eklendi (K27). 7 ve 8 Kasım'da eklenen alan sınıfları
+(çalışma saatleri, bölümler, hizmetler, kullanıcılar, randevular) henüz veritabanına eşlenmedi;
+`AppDbContext` bunları 10 Kasım'daki veritabanı adımına kadar görmezden geliyor, bu yüzden
+bu iki günde migration yok.
+
+### Randevu durumlarını kodlarken verilen kararlar (8 Kasım)
+
+**K26 – Durum enum olarak saklanıyor, durum nesnesi her seferinde enum'dan seçiliyor.**
+Durum sınıflarının kendi verisi yok; her durumdan tek bir örnek var. Randevu sadece
+`AppointmentStatus` değerini tutuyor, işlem gelince `AppointmentState.For(Status)` ile ilgili
+durum nesnesi seçiliyor. Böylece veritabanından okunan randevuda "enum bir şey, durum nesnesi
+başka bir şey söylüyor" gibi bir tutarsızlık oluşamıyor ve EF Core'un durum nesnesinden haberi
+olması gerekmiyor. Durum nesnesindeki işlem metotları `internal`: randevuyu atlayıp durumu
+doğrudan değiştirmek mümkün değil. Onay bekliyor ve Onaylandı ortak bir `ActiveState`
+sınıfından türüyor, çünkü ikisinde de iptal aynı kurallarla yapılıyor ve ikisi de saati tutuyor.
+Dört son durum (Reddedildi, İptal edildi, Tamamlandı, Gelmedi) davranış olarak aynı olduğu için
+dört boş alt sınıf yerine tek `FinalState` sınıfının dört örneği.
+*Alternatif:* durum nesnesini randevunun içinde alan olarak tutmak; ama o zaman enum ile
+nesnenin her değişiklikte birlikte güncellenmesi gerekirdi.
+
+**K27 – Onaylama, reddetme ve sonucu (tamamlandı/gelmedi) işleme aynı yetki: `CanApprove`.**
+Üç işlemi de aynı kişiler yapıyor: randevunun hekimi ve şubenin asistanı. Ayrı bir
+`CanRecordOutcome` metodu açsaydım her rolde aynı cevabı veren iki metot olurdu.
+Yöneticiler (şube ve zincir) randevu onaylamıyor: onay, hastanın ve tedavi süresinin
+değerlendirilmesi demek (K2), bu da tıbbi bir karar. Yöneticiler kendi şubelerindeki randevuyu
+**iptal** edebiliyor (ör. şube o gün kapanırsa). Hekim yetkisi şubeye değil randevuya bağlı:
+aynı şubedeki başka bir hekim, meslektaşının randevusunu onaylayamıyor.
+Kullanıcı sınıfları sadece "bu kişi bu randevuyla ilgili mi" sorusunu cevaplıyor; durumun
+işleme izin verip vermediğini durum sınıfı ayrıca kontrol ediyor. Ekranda bir butonun
+görünmesi için ikisinin de evet demesi gerekecek.
+
+**K28 – Saati gelmiş randevu iptal edilemiyor ve onaylanamıyor.**
+Başlamış bir randevuyu iptal etmek geçmişi değiştirmek olur; onaylı randevu Tamamlandı ya da
+Gelmedi ile kapatılıyor. Onay bekleyen randevunun saati onaylanmadan geçerse onaylamanın
+anlamı kalmıyor; bu randevu ret ile kapatılıyor (ret zaman koşulu olmayan tek işlem).
+Tamamlandı/Gelmedi başlama anından itibaren (başlama anı dahil) işaretlenebiliyor;
+randevunun bitmesi beklenmiyor, çünkü hekim sonucu genelde hasta koltuktayken işliyor.
+*Alternatif:* saati geçen bekleyen randevuları otomatik olarak reddetmek. Bunun için arka planda
+çalışan bir iş gerekirdi; şimdilik onay kuyruğunda "saati geçti" olarak gösterilip elle
+kapatılması yeterli.
+
+**K29 – 24 saat kuralı onay bekleyen randevuda da geçerli; sınır "24 saatten fazla".**
+Durum diyagramında 24 saat kuralı onaylı randevunun okunda yazıyordu; ama bekleyen randevu da
+saati ve üniti tutuyor (K5), son dakika iptalinde boşalan saati yönetmek yine şubenin işi.
+Bu yüzden kural duruma bakmadan uygulanıyor. Tam 24 saat kala hasta artık iptal edemiyor
+("24 saatten fazla varsa" ifadesine göre); bu sınır ayrı bir testle sınanıyor.
+
+**K30 – Randevu oluşturulurken sadece kendi tutarlılığı kontrol ediliyor.**
+`Appointment` yapıcısı hasta, hekim, hizmet ve şubenin verilmesini istiyor, bitişi hizmet
+süresinden hesaplıyor ve ilk durumu hizmete göre seçiyor. Başka randevulara ya da hekimin
+takvimine bakan kurallar (bölüm 3'teki yedi kural) tek bir randevunun bilebileceği şeyler
+değil; onlar `IBookingRule` sınıflarında ve `AppointmentScheduler` randevuyu oluşturmadan önce
+kontrol ediliyor (9 Kasım). Yapıcıyı `internal` yapıp randevuyu sadece planlayıcının
+oluşturmasını sağlamayı düşündüm; ama örnek veride geçmiş tarihli randevular da gerekecek
+(10 Kasım) ve bunlar "geçmişe randevu yok" kuralından geçemez. Bu yüzden yapıcı açık, kuralları
+atlamamak uygulama katmanında planlayıcıyı kullanmakla sağlanıyor.
+
+**Ret gerekçesi** isteğe bağlı olarak saklanıyor; arayüz tasarımındaki 3. küçük karar
+("reddederken gerekçe yazılıyor") onaylanırsa ekranda zorunlu alan yapılacak.
 
 ## 5. İlk sınıf taslağı
 
@@ -306,7 +366,7 @@ classDiagram
         +PasswordHash
         +CanApprove(Appointment) bool
         +CanCancel(Appointment, DateTime) bool
-        +CanManageBranch(int) bool
+        +CanManageBranch(Branch) bool
     }
     User <|-- Patient
     User <|-- Dentist
@@ -335,7 +395,8 @@ classDiagram
         +Period : TimeRange
         +PriceAtBooking
         +Status
-        +Approve(User)
+        +IsActive
+        +Approve(User, now)
         +Reject(User, reason)
         +Cancel(User, now)
         +Complete(User, now)
@@ -344,8 +405,9 @@ classDiagram
     class AppointmentState {
         <<abstract>>
     }
-    AppointmentState <|-- PendingState
-    AppointmentState <|-- ConfirmedState
+    AppointmentState <|-- ActiveState
+    ActiveState <|-- PendingState
+    ActiveState <|-- ConfirmedState
     AppointmentState <|-- FinalState
 
     class IBookingRule {
