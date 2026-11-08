@@ -1,3 +1,5 @@
+using DisKlinigi.Core.Domain.Appointments;
+
 namespace DisKlinigi.Core.Domain.Users;
 
 /// <summary>
@@ -21,4 +23,10 @@ public class ChainAdministrator : User
     public override bool CanManageBranch(Branch branch) => branch is not null;
 
     public override bool CanManageCatalog => true;
+
+    /// <summary>Şube yöneticisiyle aynı gerekçe: onay tıbbi bir karar, yöneticinin işi değil (K27).</summary>
+    public override bool CanApprove(Appointment appointment) => false;
+
+    /// <summary>Her şubeyi yönetebildiği için her şubedeki randevuyu iptal edebilir.</summary>
+    public override bool CanCancel(Appointment appointment, DateTime now) => CanManageBranch(appointment.Branch);
 }

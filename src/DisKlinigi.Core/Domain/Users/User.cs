@@ -1,4 +1,5 @@
 using System.Net.Mail;
+using DisKlinigi.Core.Domain.Appointments;
 
 namespace DisKlinigi.Core.Domain.Users;
 
@@ -7,11 +8,11 @@ namespace DisKlinigi.Core.Domain.Users;
 /// biri yok, herkes hasta, hekim, asistan ya da yöneticidir.
 /// </summary>
 /// <remarks>
-/// Yetki soruları (<see cref="CanManageBranch"/>, <see cref="CanManageCatalog"/>)
-/// her alt sınıfta kendi kuralıyla cevaplanıyor (çok biçimlilik). Controller'lar
-/// "rol şu mu?" diye bakmak yerine bu metotları çağıracak; böylece yetki kuralı
-/// tek yerde, ilgili sınıfın içinde duruyor (tasarım kararı K14). Randevuya özgü
-/// CanApprove/CanCancel, randevu sınıfıyla birlikte ekleniyor.
+/// Yetki soruları (<see cref="CanManageBranch"/>, <see cref="CanManageCatalog"/>,
+/// <see cref="CanApprove"/>, <see cref="CanCancel"/>) her alt sınıfta kendi kuralıyla
+/// cevaplanıyor (çok biçimlilik). Controller'lar ve randevu durumları "rol şu mu?"
+/// diye bakmak yerine bu metotları çağırıyor; böylece yetki kuralı tek yerde,
+/// ilgili sınıfın içinde duruyor (tasarım kararı K14).
 /// </remarks>
 public abstract class User : Entity
 {
@@ -44,6 +45,19 @@ public abstract class User : Entity
 
     /// <summary>Zincir genelindeki bölüm ve hizmet kataloğunu değiştirebilir mi? Varsayılan cevap hayır.</summary>
     public virtual bool CanManageCatalog => false;
+
+    /// <summary>
+    /// Bu kullanıcı randevuyu onaylayıp reddedebilir ve sonucunu (tamamlandı/gelmedi)
+    /// işleyebilir mi? Kişinin o randevuyla ilişkisine bakıyor; randevunun durumunun
+    /// bu işleme izin verip vermediğini randevu ayrıca kontrol ediyor.
+    /// </summary>
+    public abstract bool CanApprove(Appointment appointment);
+
+    /// <summary>
+    /// Bu kullanıcı randevuyu verilen anda iptal edebilir mi? Hasta için 24 saat kuralı
+    /// burada; randevunun başlamış olması ve durumu randevu tarafında kontrol ediliyor.
+    /// </summary>
+    public abstract bool CanCancel(Appointment appointment, DateTime now);
 
     public void Rename(string fullName)
     {
