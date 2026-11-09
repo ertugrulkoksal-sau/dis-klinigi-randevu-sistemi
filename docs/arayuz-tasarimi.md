@@ -4,11 +4,11 @@ Ekranları kod yazmadan önce tasarım kanvasında çizdim. Kanvas bağlantısı
 
 **https://claude.ai/artifact/LqSo2athR6pzshgDTkbAhc**
 
-**Onay durumu: onay bekliyor** (7 Kasım 2026'da onaya sunuldu, 9 Kasım'da inceleme sonrası
-düzeltilmiş hali — revizyon 1 — tekrar onaya sunuldu)
+**Onay durumu: onaylandı** (9 Kasım 2026, revizyon 1). 7 Kasım'da onaya sunuldu, 9 Kasım'da
+bağımsız inceleme sonrası düzeltildi ve bu haliyle onaylandı. Ekranlar 11 Kasım'dan itibaren
+bu revizyona göre kodlanacak.
 
 Kanvas şimdilik sadece bana açık; başkasına göstermek için sayfadaki Paylaş menüsünden paylaşmak gerekiyor.
-Ekranlar onaylanana kadar koda dökülmüyor; plan gereği ekran işleri en erken 11 Kasım'da başlıyor.
 Onaydan sonra yapılacak tasarım değişiklikleri de önce kanvasta gösterilip sonra koda uygulanacak.
 
 ## Ekranlar
