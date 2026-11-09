@@ -96,15 +96,19 @@ kuralların tamamı kullanıcıya birlikte gösteriliyor (ilk hatada durmak yeri
 Aynı kurallar, hastaya gösterilecek boş saatleri üretirken de kullanılıyor; yani
 "ekranda boş görünen saat" ile "kaydederken kabul edilen saat" aynı koddan çıkıyor.
 
-| # | Kural | Açıklama |
-|---|---|---|
-| 1 | Geçmişe randevu yok | Başlangıç şu andan sonra olmalı. |
-| 2 | Hekim bu hizmeti veriyor | Seçilen hizmet hekimin hizmet listesinde olmalı ve şube o bölümü barındırmalı. |
-| 3 | Şube çalışma saati | Randevu, şubenin o günkü açılış–kapanış aralığına tamamen sığmalı. |
-| 4 | Hekim müsaitliği | Randevu, hekimin **o şubedeki** o günkü müsaitlik aralıklarından birine tamamen sığmalı. |
-| 5 | Hekim çakışması | Hekimin **herhangi bir şubede** bu saatle kesişen aktif randevusu olmamalı. |
-| 6 | Hasta çakışması | Hastanın herhangi bir şubede bu saatle kesişen aktif randevusu olmamalı. |
-| 7 | Ünit kapasitesi | Randevu süresi boyunca şubede aynı anda yürüyen randevu sayısı ünit sayısını aşmamalı. |
+| # | Kural | Sınıf | Açıklama |
+|---|---|---|---|
+| 1 | Geçmişe randevu yok | `FutureStartRule` | Başlangıç şu andan sonra olmalı (tam şu an da kabul edilmiyor). |
+| 2a | Hekim bu hizmeti veriyor | `DentistOffersServiceRule` | Seçilen hizmet hekimin hizmet listesinde olmalı. |
+| 2b | Şube bu bölümü barındırıyor | `BranchHostsDepartmentRule` | Hizmetin bölümü şubede bulunmalı (K33). |
+| 3 | Şube çalışma saati | `WorkingHoursRule` | Randevu, şubenin o günkü açılış–kapanış aralığına tamamen sığmalı. |
+| 4 | Hekim müsaitliği | `DentistAvailabilityRule` | Randevu, hekimin **o şubedeki** o günkü müsaitlik aralıklarından birine tamamen sığmalı. |
+| 5 | Hekim çakışması | `DentistOverlapRule` | Hekimin **herhangi bir şubede** bu saatle kesişen aktif randevusu olmamalı. |
+| 6 | Hasta çakışması | `PatientOverlapRule` | Hastanın herhangi bir şubede bu saatle kesişen aktif randevusu olmamalı. |
+| 7 | Ünit kapasitesi | `ChairCapacityRule` | Randevu süresi boyunca şubede aynı anda yürüyen randevu sayısı ünit sayısını aşmamalı. |
+
+Kuralların hepsi `IBookingRule` arayüzünü uyguluyor ve `AppointmentScheduler` tarafından
+tablodaki sırayla çalıştırılıyor; mesajlar da bu sırayla gösteriliyor.
 
 "Aktif randevu" = Onay Bekliyor veya Onaylandı durumundaki randevu (bkz. K5).
 
@@ -116,7 +120,10 @@ demek yanlış sonuç veriyor. Örnek: 2 ünitli şubede 09:00–09:30 ve 09:30�
 randevuları var; 09:00–10:00 için yeni randevu istendiğinde iki randevuyla da kesişiyor
 ama aynı anda en fazla **bir** randevu yürüyor, yani bir ünit hep boş. Bu yüzden istenen
 aralık içindeki **en yüksek eş zamanlı randevu sayısı** hesaplanıyor (başlangıç/bitiş
-noktaları sıralanıp taranarak). Bu durum için ayrı bir birim testi yazılacak.
+noktaları sıralanıp taranarak, `ChairCapacityRule.PeakOccupancy`). Aynı anda biten ve
+başlayan iki randevu çakışmadığı için taramada aynı andaki olaylardan önce bitişler sayılıyor.
+Bu örnek ve "merdiven" şeklindeki üçlü kesişme için ayrı birim testleri var
+(`ChairCapacityRuleTests`).
 
 ## 4. Tasarım kararları
 
@@ -242,10 +249,27 @@ uygulanıyor ve veritabanı boşsa örnek veri yükleniyor. Sunum makinesinde `d
 dışında bir şey yapmaya gerek kalmıyor. *Alternatif:* `EnsureCreated()`; daha basit ama
 model değiştiğinde veritabanını silmek gerekiyor ve şema geçmişi tutulmuyor.
 
-**K19 – Eş zamanlı randevu denemeleri.**
-İki hasta aynı anda aynı saate randevu almaya çalışırsa ikisi de kontrolü geçip kaydedebilir.
-Bunu önlemek için kontrol ve kayıt tek bir veritabanı işlemi (transaction) içinde yapılacak;
-ayrıntısı çakışma kontrolü gününde (9 Kasım) netleşecek ve README'ye yazılacak.
+**K19 – Eş zamanlı randevu denemeleri: kontrol ve kayıt, yazma kilidi alan tek bir işlemde.**
+İki hasta aynı anda aynı saate randevu almaya çalışırsa ikisi de "boş" görüp kaydedebilir.
+Bunu önlemek için `AppointmentScheduler.BookAsync` önce işlemi açıyor, günün randevularını
+işlem **içinde** okuyor, kuralları çalıştırıyor ve kaydı aynı işlemde onaylıyor. İşlem
+Core'da `IAppointmentRepository.BeginBookingTransactionAsync` ile soyutlandı; EF Core
+gerçekleştirimi (10 Kasım) `Database.BeginTransactionAsync` kullanacak. SQLite'ta bu işlem
+`BEGIN IMMEDIATE` ile başlıyor, yani yazma kilidi işlemin başında alınıyor: ikinci istek
+birincinin bitmesini bekliyor, sonra kontrolünü güncel veriyle yapıyor ve "hekim dolu" ya da
+"ünitler dolu" cevabı alıyor. Testte bellek içi repository aynı davranışı bir semaforla
+taklit ediyor; okumayı işlemin dışına aldığımda iki eş zamanlılık testinin de düştüğünü denedim.
+*Bedeli:* bütün randevu kayıtları (farklı şubelerde bile) sırayla yapılıyor. Bir klinik
+zincirinde saniyede birkaç randevu bile alınmadığı için bu bir sorun değil; okuma (boş saat
+listesi) kilit almıyor.
+*Alternatifler:* (a) Uygulama içinde kilit (`SemaphoreSlim`): veritabanından bağımsız ama
+sadece tek süreçte işe yarıyor, uygulama iki örnekle çalışırsa koruma kalmıyor. (b) Benzersiz
+indeks: "aynı hekim + aynı başlangıç" gibi bir indeks, kesişen ama başlangıcı farklı randevuları
+(10:00–11:00 ile 10:30–11:00) yakalayamıyor; ünit kapasitesini hiç ifade edemiyor. (c) İyimser
+eş zamanlılık (satır sürümü): çakışma tek bir satırda değil bir zaman aralığında olduğu için
+hangi satırın sürümüne bakılacağı belli değil; "hekimin günü" gibi yapay bir satır eklemek
+gerekirdi. Sunucu tabanlı bir veritabanına geçilirse aynı işlem `Serializable` yalıtım
+seviyesiyle ya da hekim/şube satırına kilit alarak korunabilir; planlayıcının kodu değişmez.
 
 **K20 – Kod İngilizce, arayüz ve yorumlar Türkçe.**
 Sınıf ve metot adlarında Türkçe karakter kullanmak (ı, ş, ğ) hem yazımı zorlaştırıyor hem
@@ -343,7 +367,7 @@ Bu yüzden kural duruma bakmadan uygulanıyor. Tam 24 saat kala hasta artık ipt
 **K30 – Randevu oluşturulurken sadece kendi tutarlılığı kontrol ediliyor.**
 `Appointment` yapıcısı hasta, hekim, hizmet ve şubenin verilmesini istiyor, bitişi hizmet
 süresinden hesaplıyor ve ilk durumu hizmete göre seçiyor. Başka randevulara ya da hekimin
-takvimine bakan kurallar (bölüm 3'teki yedi kural) tek bir randevunun bilebileceği şeyler
+takvimine bakan kurallar (bölüm 3'teki kurallar) tek bir randevunun bilebileceği şeyler
 değil; onlar `IBookingRule` sınıflarında ve `AppointmentScheduler` randevuyu oluşturmadan önce
 kontrol ediliyor (9 Kasım). Yapıcıyı `internal` yapıp randevuyu sadece planlayıcının
 oluşturmasını sağlamayı düşündüm; ama örnek veride geçmiş tarihli randevular da gerekecek
@@ -352,6 +376,44 @@ atlamamak uygulama katmanında planlayıcıyı kullanmakla sağlanıyor.
 
 **Ret gerekçesi** isteğe bağlı olarak saklanıyor; arayüz tasarımındaki 3. küçük karar
 ("reddederken gerekçe yazılıyor") onaylanırsa ekranda zorunlu alan yapılacak.
+
+### Çakışma kontrolünü kodlarken verilen kararlar (9 Kasım)
+
+**K31 – Kurallar veritabanına gitmiyor; planlayıcı günün randevularını bir kez okuyup
+`BookingContext` ile veriyor.**
+Bağlamda "şu an" ve o günle kesişen, ilgili hekime, hastaya ya da şubeye ait aktif randevular
+var. Sadece aktif randevuların tutulması (K5) bağlamın işi; kuralların her biri "iptal edileni
+sayma" diye ayrıca düşünmüyor. Böylece kurallar saf fonksiyon gibi çalışıyor ve testleri için
+sadece bir randevu listesi yetiyor. Boş saat üretiminde bir gün için onlarca aday saat tek
+sorguyla kontrol ediliyor. Kural çiğnendiğinde istisna değil `RuleResult` dönüyor, çünkü ilk
+hatada durmak yerine çiğnenen kuralların hepsi gösteriliyor ve dolu saat olağan bir cevap.
+*Alternatif:* her kural kendi repository sorgusunu yapsın. Kurallar daha bağımsız olurdu ama
+boş saat listesinde her aday saat için üç ayrı sorgu gerekirdi ve kural testleri sahte
+repository'ye ihtiyaç duyardı.
+
+**K32 – Boş saatler müsaitlik aralığının başından itibaren 15 dakikalık adımlarla üretiliyor.**
+Hekimin o gün o şubedeki her aralığı için aralığın başından başlanıp hizmet aralığın sonuna
+sığdığı sürece 15'er dakika ilerleniyor; her aday saat kayıttaki kuralların aynısından geçiyor.
+Hastanın kendi başka randevusuyla çakışan saat de gösterilmiyor. Örneğin 20 dakikalık muayeneden
+sonra 09:20–09:30 arası boş kalıyor; bunu kabul ettim, çünkü liste düzenli ve okunaklı oluyor.
+Kayıt sırasında saatin ızgarada olması ayrıca kontrol edilmiyor; ekranda sadece listedeki
+saatler seçilebiliyor. *Alternatif:* var olan randevuların bitiş saatlerini de aday yapmak
+(09:20'ye randevu vermek). Ünitler daha verimli kullanılır ama liste 09:00, 09:15, 09:20, 09:35…
+gibi düzensiz görünür.
+
+**K33 – "Hekim bu hizmeti veriyor" kuralı ikiye ayrıldı.**
+Bölüm 3'teki 2. kural iki ayrı soru soruyordu: hekim bu hizmeti veriyor mu, şube bu bölümü
+barındırıyor mu? İkisini ayrı sınıf yaptım (`DentistOffersServiceRule`,
+`BranchHostsDepartmentRule`); her kural sınıfı tek bir soruyu cevaplıyor ve ikisi birlikte
+çiğnenirse kullanıcı iki ayrı mesaj görüyor.
+
+**Otomatik onay** planlayıcıda değil, randevunun yapıcısında: ilk durum hizmetin
+`RequiresApproval` alanına göre seçiliyor (K2, K30). Planlayıcı kurallar geçince randevuyu
+oluşturup kaydediyor; muayene "Onaylandı", kanal tedavisi "Onay bekliyor" olarak çıkıyor.
+
+**DI kaydı:** Kurallar ve planlayıcı, EF Core repository'si yazılınca (10 Kasım) `Program.cs`'e
+ekleniyor. Bugün eklemedim, çünkü geliştirme ortamında ASP.NET Core açılışta bütün kayıtları
+doğruluyor ve gerçekleştirimi olmayan `IAppointmentRepository` uygulamanın açılmasını engellerdi.
 
 ## 5. İlk sınıf taslağı
 

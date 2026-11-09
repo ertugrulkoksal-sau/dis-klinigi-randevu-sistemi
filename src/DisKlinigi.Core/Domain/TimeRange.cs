@@ -41,5 +41,8 @@ public sealed record TimeRange
     /// <summary>Verilen an bu aralıkta mı? Bitiş anı dahil değil.</summary>
     public bool Contains(DateTime moment) => Start <= moment && moment < End;
 
+    /// <summary>Sadece saatler, ör. "11:00–12:00"; tarihin zaten belli olduğu mesajlarda kullanılıyor.</summary>
+    public string ToTimeString() => $"{Start:HH:mm}–{End:HH:mm}";
+
     public override string ToString() => $"{Start:dd.MM.yyyy HH:mm}–{End:HH:mm}";
 }
