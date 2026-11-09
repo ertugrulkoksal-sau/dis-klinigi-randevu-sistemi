@@ -54,8 +54,8 @@ Genel Diş Hekimliği, Ağız Diş ve Çene Cerrahisi, Endodonti, Ortodonti, Ped
 | **Hasta** | Kayıt olur, şube → bölüm → hizmet → hekim → saat seçerek randevu alır, randevularını görür, 24 saatten fazla varsa iptal eder. |
 | **Hekim** | Kendi müsaitlik aralıklarını tanımlar, kendi randevularını onaylar/reddeder, randevuyu tamamlandı/gelmedi olarak işaretler. |
 | **Asistan** (sağlık personeli) | Bağlı olduğu şubenin onay kuyruğunu yönetir, şubedeki randevuları iptal edebilir. |
-| **Şube yöneticisi** | Sadece kendi şubesinin çalışma saatlerini, bölümlerini, ünit sayısını ve personelini yönetir. |
-| **Zincir yöneticisi** | Şube açar/kapatır, hizmet kataloğunu yönetir, tüm şubelerde şube yöneticisinin yapabildiği her şeyi yapar. |
+| **Şube yöneticisi** | Sadece kendi şubesinin çalışma saatlerini, bölümlerini ve ünit sayısını yönetir; şubesine hekim atar ya da çıkarır, şubesi için asistan hesabı açar. Randevu onaylamaz ve iptal etmez (K34). |
+| **Zincir yöneticisi** | Şube açar, hizmet kataloğunu yönetir, hekim kaydını ve hekimin şubeden bağımsız bilgilerini (uzmanlık, verdiği hizmetler, giriş e-postası) düzenler; tüm şubelerde şube yöneticisinin yapabildiği her şeyi yapar. |
 
 Ödevdeki "Hastane/Klinik Yöneticisi" rolü iki seviyeye bölündü (bkz. K3).
 
@@ -341,8 +341,8 @@ nesnenin her değişiklikte birlikte güncellenmesi gerekirdi.
 Üç işlemi de aynı kişiler yapıyor: randevunun hekimi ve şubenin asistanı. Ayrı bir
 `CanRecordOutcome` metodu açsaydım her rolde aynı cevabı veren iki metot olurdu.
 Yöneticiler (şube ve zincir) randevu onaylamıyor: onay, hastanın ve tedavi süresinin
-değerlendirilmesi demek (K2), bu da tıbbi bir karar. Yöneticiler kendi şubelerindeki randevuyu
-**iptal** edebiliyor (ör. şube o gün kapanırsa). Hekim yetkisi şubeye değil randevuya bağlı:
+değerlendirilmesi demek (K2), bu da tıbbi bir karar. 9 Kasım'daki tasarım incelemesinden sonra
+yöneticilerin randevu iptali de kaldırıldı (K34). Hekim yetkisi şubeye değil randevuya bağlı:
 aynı şubedeki başka bir hekim, meslektaşının randevusunu onaylayamıyor.
 Kullanıcı sınıfları sadece "bu kişi bu randevuyla ilgili mi" sorusunu cevaplıyor; durumun
 işleme izin verip vermediğini durum sınıfı ayrıca kontrol ediyor. Ekranda bir butonun
@@ -414,6 +414,38 @@ oluşturup kaydediyor; muayene "Onaylandı", kanal tedavisi "Onay bekliyor" olar
 **DI kaydı:** Kurallar ve planlayıcı, EF Core repository'si yazılınca (10 Kasım) `Program.cs`'e
 ekleniyor. Bugün eklemedim, çünkü geliştirme ortamında ASP.NET Core açılışta bütün kayıtları
 doğruluyor ve gerçekleştirimi olmayan `IAppointmentRepository` uygulamanın açılmasını engellerdi.
+
+### Arayüz tasarımı incelemesinden sonra verilen kararlar (9 Kasım)
+
+Tasarımı çizen değil, ayrı bir inceleyici ekranları ödev maddeleri, bu doküman ve mevcut kodla
+karşılaştırdı. Bulgular ve kanvasta yapılan düzeltmeler [arayuz-tasarimi.md](arayuz-tasarimi.md)
+dosyasında. Alan modelini etkileyen kararlar şunlar:
+
+**K34 – Yöneticiler randevuya dokunmuyor; şube yöneticisi hekimin ortak bilgilerini düzenlemiyor.**
+İlk tasarımda şube yöneticisi bir hekimin uzmanlığını, verdiği hizmetleri ve e-postasını
+değiştirebiliyordu. Ama bu bilgiler hekimin bütün şubeleri için ortak: Serdivan yöneticisinin
+yaptığı değişiklik hekimin Kadıköy'deki çalışmasını da etkiliyordu, bu da K3'teki "sadece kendi
+şubesi" sınırını aşmak demek. Bu yüzden hekim kaydı ve ortak bilgileri zincir yöneticisinde;
+şube yöneticisi sadece hekimi kendi şubesine atıyor ya da çıkarıyor ve kendi şubesi için asistan
+hesabı açıyor. Yöneticilerin şube randevularını iptal etmesi için ayrıca bir ekran gerekecekti;
+kapsamı büyütmemek için bu yetkiyi kaldırdım. Randevu işlemleri hekim ve asistanda kalıyor.
+Kodda `BranchManager.CanCancel` ve `ChainAdministrator.CanCancel` personel paneli gününde
+(13 Kasım) `false` olacak. *Alternatif:* yöneticiye salt okunur bir "şube randevuları" listesi
+ve iptal yetkisi vermek; gerçek bir klinikte faydalı ama ödevin rol tanımı bunu gerektirmiyor.
+
+**K35 – Randevuda hasta notu ve oluşturulma zamanı tutuluyor.**
+Hasta randevu alırken hekime kısa bir not yazabiliyor (en fazla 500 karakter, isteğe bağlı);
+onay kuyruğunda randevunun ne zaman alındığı görünüyor. İkisi de onay veren kişinin karar
+vermesine yardım ediyor. Veritabanı gününde (10 Kasım) `Appointment`'a ekleniyor.
+
+**K36 – Personel hesabı geçici parolayla açılıyor, ilk girişte değiştirme zorunlu değil.**
+Tasarım ilk halinde "ilk girişte parola değiştirme" akışı öneriyordu. Bu, ayrı bir ekran ve
+kullanıcıda ek bir durum alanı demek; ödevin istediği bir şey olmadığı için kapsam dışı bıraktım.
+Parolalar yine `PasswordHasher` ile saklanıyor (K15).
+
+**Şubeler arası yol süresi (K24'teki varsayım) olduğu gibi kalıyor:** bir hekim sabah bir
+şubede, öğleden sonra başka şubede uç uca çalışabiliyor. Gerçekte arada yol süresi gerekir;
+bu, hekimin aralıklarını girerken kendisinin bırakacağı bir boşluk olarak düşünüldü.
 
 ## 5. İlk sınıf taslağı
 
@@ -503,11 +535,12 @@ classDiagram
 
 ## 6. Ekranlar
 
-Ekranlar kod yazılmadan önce tasarım kanvasında çizildi (7 Kasım) ve onaya sunuldu.
+Ekranlar kod yazılmadan önce tasarım kanvasında çizildi (7 Kasım), bağımsız bir incelemeden
+sonra düzeltildi (9 Kasım) ve onaya sunuldu.
 Kanvas bağlantısı, ekranların ayrıntılı listesi ve onay durumu: [arayuz-tasarimi.md](arayuz-tasarimi.md).
 
 1. Giriş ve hasta kaydı
 2. Hasta: randevu alma akışı (şube → bölüm → hizmet → hekim → tarih/saat → özet ve onay)
 3. Hasta: randevularım (durum, iptal)
 4. Hekim/asistan: günlük takvim, onay kuyruğu, müsaitlik aralıkları
-5. Yönetici: şubeler, çalışma saatleri, bölümler, hizmetler, personel
+5. Yönetici: şubeler, çalışma saatleri, bölümler, hizmetler, şube personeli, hekim kaydı
