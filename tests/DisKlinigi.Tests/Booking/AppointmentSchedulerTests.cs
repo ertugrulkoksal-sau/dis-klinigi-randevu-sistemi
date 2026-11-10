@@ -1,4 +1,5 @@
 using DisKlinigi.Core.Booking;
+using DisKlinigi.Core.Domain;
 using DisKlinigi.Core.Domain.Appointments;
 using static DisKlinigi.Tests.Booking.BookingClinic;
 
@@ -26,6 +27,26 @@ public class AppointmentSchedulerTests
         Assert.Same(result.Appointment, Assert.Single(repository.Saved));
         Assert.Equal(1, repository.CommitCount);
         Assert.Equal(request.Period, result.Appointment.Period);
+    }
+
+    [Fact]
+    public async Task Kaydedilen_randevuda_hasta_notu_ve_alindigi_an_var()
+    {
+        // K35: oluşturulma zamanı kuralların kontrol edildiği an, yani TimeProvider'ın saati.
+        var request = new BookingRequest(
+            _clinic.Ali, _clinic.Ayse, _clinic.CanalTreatment, _clinic.Serdivan, At(10), " Dolgum düştü. ");
+
+        var result = await _clinic.Scheduler(new InMemoryAppointmentRepository()).BookAsync(request);
+
+        Assert.Equal(ClockStart, result.Appointment!.CreatedAt);
+        Assert.Equal("Dolgum düştü.", result.Appointment.PatientNote);
+    }
+
+    [Fact]
+    public void Cok_uzun_not_kurallar_calismadan_istekte_reddedilir()
+    {
+        Assert.Throws<DomainException>(() => new BookingRequest(
+            _clinic.Ali, _clinic.Ayse, _clinic.Examination, _clinic.Serdivan, At(10), new string('x', 501)));
     }
 
     [Fact]

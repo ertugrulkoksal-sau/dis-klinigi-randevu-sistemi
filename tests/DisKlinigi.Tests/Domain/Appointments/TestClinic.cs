@@ -82,7 +82,7 @@ internal sealed class TestClinic
     }
 
     /// <summary>Ali'nin Ayşe Hanım'dan Serdivan'da 10 Kasım 11:00'e randevusu.</summary>
-    public Appointment Book(Service service) => new(Ali, Ayse, service, Serdivan, AppointmentStart);
+    public Appointment Book(Service service) => new(Ali, Ayse, service, Serdivan, AppointmentStart, createdAt: ClockStart);
 
     /// <summary>Yetki testlerinde kullanılan kişiler; tablo satırlarında adlarıyla anılıyorlar.</summary>
     public User Actor(string name) => name switch

@@ -55,6 +55,14 @@ public abstract class AppointmentState
     public static AppointmentState Initial(Service service) =>
         service.RequiresApproval ? PendingState.Instance : ConfirmedState.Instance;
 
+    /// <summary>
+    /// Saati tutan durumların listesi (K5). Veritabanı sorgusu durum nesnesini çalıştıramadığı
+    /// için "aktif randevular" filtresini bu listeyle yapıyor; liste elle yazılmadı, durum
+    /// sınıflarının <see cref="IsActive"/> cevabından çıkarılıyor, yani kural tek yerde.
+    /// </summary>
+    public static IReadOnlyList<AppointmentStatus> ActiveStatuses { get; } =
+        Enum.GetValues<AppointmentStatus>().Where(s => For(s).IsActive).ToArray();
+
     /// <summary>Saklanan durum değerine karşılık gelen durum nesnesi.</summary>
     public static AppointmentState For(AppointmentStatus status) => status switch
     {
