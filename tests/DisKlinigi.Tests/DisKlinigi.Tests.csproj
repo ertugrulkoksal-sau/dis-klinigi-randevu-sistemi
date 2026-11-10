@@ -18,6 +18,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\DisKlinigi.Core\DisKlinigi.Core.csproj" />
+    <!-- Veri katmanı testleri (Data klasörü) EF Core eşlemelerini gerçek SQLite üzerinde sınıyor (K40). -->
+    <ProjectReference Include="..\..\src\DisKlinigi.Web\DisKlinigi.Web.csproj" />
   </ItemGroup>
 
 </Project>
