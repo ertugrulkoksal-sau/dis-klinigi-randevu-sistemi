@@ -194,8 +194,9 @@ iyi desteklemediği için `DateTime` kullanılıyor.
 **K11 – Katmanlar: Core, Web, Tests.**
 `DisKlinigi.Core` alan sınıflarını, iş kurallarını ve arayüzleri içeriyor; hiçbir altyapı
 paketine bağımlı değil. `DisKlinigi.Web` MVC arayüzünü ve EF Core ile veri erişimini içeriyor.
-`DisKlinigi.Tests` sadece Core'u test ediyor. Böylece çakışma kuralları veritabanı ve web
-sunucusu olmadan, milisaniyeler içinde test edilebiliyor. *Alternatif:* ayrı bir
+`DisKlinigi.Tests` ağırlıklı olarak Core'u test ediyor. Böylece çakışma kuralları veritabanı ve web
+sunucusu olmadan, milisaniyeler içinde test edilebiliyor. 10 Kasım'dan itibaren aynı projede
+veri katmanı testleri de var (`Data` klasörü, K40). *Alternatif:* ayrı bir
 Infrastructure projesi (klasik Clean Architecture). Bu boyutta bir projede veri erişimini
 Web içinde bir klasörde tutmak yeterli; ayrı proje sadece tören eklerdi.
 
@@ -254,11 +255,16 @@ model değiştiğinde veritabanını silmek gerekiyor ve şema geçmişi tutulmu
 Bunu önlemek için `AppointmentScheduler.BookAsync` önce işlemi açıyor, günün randevularını
 işlem **içinde** okuyor, kuralları çalıştırıyor ve kaydı aynı işlemde onaylıyor. İşlem
 Core'da `IAppointmentRepository.BeginBookingTransactionAsync` ile soyutlandı; EF Core
-gerçekleştirimi (10 Kasım) `Database.BeginTransactionAsync` kullanacak. SQLite'ta bu işlem
-`BEGIN IMMEDIATE` ile başlıyor, yani yazma kilidi işlemin başında alınıyor: ikinci istek
+gerçekleştirimi (`EfAppointmentRepository`) `Database.BeginTransactionAsync` kullanıyor. SQLite'ta bu
+işlem `BEGIN IMMEDIATE` ile başlıyor, yani yazma kilidi işlemin başında alınıyor: ikinci istek
 birincinin bitmesini bekliyor, sonra kontrolünü güncel veriyle yapıyor ve "hekim dolu" ya da
-"ünitler dolu" cevabı alıyor. Testte bellek içi repository aynı davranışı bir semaforla
+"ünitler dolu" cevabı alıyor. Core testlerinde bellek içi repository aynı davranışı bir semaforla
 taklit ediyor; okumayı işlemin dışına aldığımda iki eş zamanlılık testinin de düştüğünü denedim.
+10 Kasım'da aynı senaryo gerçek SQLite dosyası ve iki ayrı bağlantıyla da sınandı
+(`EfAppointmentRepositoryTests`): birinci işlem açıkken ikinci istek ilerlemiyor, birinci
+kaydedince "hekim dolu" / "ünitlerin hepsi dolu" cevabı alıyor. İşlemi geçici olarak ertelenmiş
+kilitle (`BEGIN DEFERRED`) açtığımda bu iki testin düştüğünü gördüm; yani testler kilidin
+kendisini sınıyor.
 *Bedeli:* bütün randevu kayıtları (farklı şubelerde bile) sırayla yapılıyor. Bir klinik
 zincirinde saniyede birkaç randevu bile alınmadığı için bu bir sorun değil; okuma (boş saat
 listesi) kilit almıyor.
@@ -317,10 +323,8 @@ daha ince süreye gerek yok; 4 saatten uzun işlemler gerçekte birkaç seansa b
 Ücret negatif olamıyor, ücretsiz (0 ₺) hizmet tanımlanabiliyor.
 
 **Not:** `CanApprove` ve `CanCancel` yetki metotları randevu sınıfına ihtiyaç duyduğu için
-8 Kasım'da randevu durumlarıyla birlikte eklendi (K27). 7 ve 8 Kasım'da eklenen alan sınıfları
-(çalışma saatleri, bölümler, hizmetler, kullanıcılar, randevular) henüz veritabanına eşlenmedi;
-`AppDbContext` bunları 10 Kasım'daki veritabanı adımına kadar görmezden geliyor, bu yüzden
-bu iki günde migration yok.
+8 Kasım'da randevu durumlarıyla birlikte eklendi (K27). 7–9 Kasım'da eklenen alan sınıfları
+10 Kasım'daki veritabanı adımında tablolara eşlendi (K37, `AlanModeliTablolari` migration'ı).
 
 ### Randevu durumlarını kodlarken verilen kararlar (8 Kasım)
 
@@ -412,8 +416,10 @@ barındırıyor mu? İkisini ayrı sınıf yaptım (`DentistOffersServiceRule`,
 oluşturup kaydediyor; muayene "Onaylandı", kanal tedavisi "Onay bekliyor" olarak çıkıyor.
 
 **DI kaydı:** Kurallar ve planlayıcı, EF Core repository'si yazılınca (10 Kasım) `Program.cs`'e
-ekleniyor. Bugün eklemedim, çünkü geliştirme ortamında ASP.NET Core açılışta bütün kayıtları
+eklendi. 9 Kasım'da eklemedim, çünkü geliştirme ortamında ASP.NET Core açılışta bütün kayıtları
 doğruluyor ve gerçekleştirimi olmayan `IAppointmentRepository` uygulamanın açılmasını engellerdi.
+Kuralların listesi ve sırası tek yerde, `BookingRules.CreateDefault()` içinde; `Program.cs`, testler
+ve örnek veri aynı listeyi kullanıyor.
 
 ### Arayüz tasarımı incelemesinden sonra verilen kararlar (9 Kasım)
 
@@ -436,7 +442,10 @@ ve iptal yetkisi vermek; gerçek bir klinikte faydalı ama ödevin rol tanımı 
 **K35 – Randevuda hasta notu ve oluşturulma zamanı tutuluyor.**
 Hasta randevu alırken hekime kısa bir not yazabiliyor (en fazla 500 karakter, isteğe bağlı);
 onay kuyruğunda randevunun ne zaman alındığı görünüyor. İkisi de onay veren kişinin karar
-vermesine yardım ediyor. Veritabanı gününde (10 Kasım) `Appointment`'a ekleniyor.
+vermesine yardım ediyor. 10 Kasım'da `Appointment`'a eklendi (`PatientNote`, `CreatedAt`).
+Oluşturulma zamanını planlayıcı veriyor (kuralların kontrol edildiği "şu an"); randevu, başlangıcından
+önce alınmış olmayı kendisi de kontrol ediyor. 500 karakteri aşan not kesilmiyor, hata veriyor;
+bu kontrol randevu isteğinde de (`BookingRequest`) yapılıyor ki kurallar boşuna çalışmasın.
 
 **K36 – Personel hesabı geçici parolayla açılıyor, ilk girişte değiştirme zorunlu değil.**
 Tasarım ilk halinde "ilk girişte parola değiştirme" akışı öneriyordu. Bu, ayrı bir ekran ve
@@ -446,6 +455,69 @@ Parolalar yine `PasswordHasher` ile saklanıyor (K15).
 **Şubeler arası yol süresi (K24'teki varsayım) olduğu gibi kalıyor:** bir hekim sabah bir
 şubede, öğleden sonra başka şubede uç uca çalışabiliyor. Gerçekte arada yol süresi gerekir;
 bu, hekimin aralıklarını girerken kendisinin bırakacağı bir boşluk olarak düşünüldü.
+
+### Veritabanını kodlarken verilen kararlar (10 Kasım)
+
+**K37 – Eşleme alan sınıflarına dokunmadan, Fluent API ile; değer nesneleri ayrı tablo değil.**
+Bütün eşlemeler `Data/Configurations` altında, her parça kendi sınıfında (`IEntityTypeConfiguration`).
+Alan sınıflarına tek bir EF özniteliği eklemedim; private set'ler ve okunur listeler olduğu gibi
+kaldı, EF Core listeleri arka alanlardan (`_departments`, `_availability`...) dolduruyor.
+- `TimeRange` (randevu) ve `TimeOfDayRange` (çalışma saati, müsaitlik) EF Core'un *karmaşık tip*
+  özelliğiyle sahibinin satırına iki sütun olarak yazılıyor (`Start`/`End`, `Opens`/`Closes`).
+  Kendi Id'leri yok, çünkü değer nesnesi: iki aralık aynı saatlerdeyse aynı şey. Veritabanından
+  okunurken yapıcıları çalıştığı için bozuk bir satır (bitiş ≤ başlangıç) nesneye dönüşemiyor.
+- Şubenin günlük çalışma saati (`DailyWorkingHours`) ayrı tabloda ama Id'siz; anahtarı
+  (şube, gün). Böylece `Branch.SetWorkingHours`'taki "aynı güne iki kayıt olmaz" kuralı
+  veritabanında da garanti.
+- Kullanıcılar tek tabloda (K14); türü `UserType` sütunu söylüyor ve değerleri `UserRole`
+  adlarıyla aynı. Asistan ve şube yöneticisinin şubesi aynı `BranchId` sütununu paylaşıyor; EF
+  Core bunları varsayılan olarak iki ayrı sütuna (`Assistant_BranchId`) koyuyordu, sütun adını
+  açıkça verdim.
+- Çoka-çok ilişkiler (şube–bölüm, hekim–şube, hekim–hizmet) ara tablolarla; ara tablolar için
+  sınıf yazmadım, çünkü ilişkinin kendi verisi yok. Geri gezinme de yok (bölümün "şubeleri" gibi),
+  çünkü alan modeli o yönde soru sormuyor.
+*Alternatif:* değer nesnelerini `OwnsOne` ile "sahipli varlık" yapmak. EF Core'da sahipli varlıklar
+aslında gizli anahtarlı varlıklar ve aralığı değiştirmek "eskisini sil, yenisini ekle" olarak
+izleniyor; karmaşık tip değer nesnesinin anlamına daha uygun.
+
+**K38 – Sütun tipleri okunur seçildi; randevu geçmişi silinmiyor.**
+Randevu durumu ve gün adları metin olarak saklanıyor (`Confirmed`, `Tuesday`): veritabanına
+bakınca anlaşılıyor ve enum'daki sıra değişirse eski kayıtların anlamı kaymıyor. Hizmet süresi
+tam sayı dakika (`DurationMinutes`), çünkü SQLite `TimeSpan`'i "01:00:00" metni olarak tutuyor.
+SQLite'ın ondalık tipi yok; EF Core `decimal` ücretleri metin olarak saklıyor, yani 2500,00 ₺ kayan
+noktaya çevrilip yuvarlanmıyor. Bedeli, ücrete göre veritabanında sıralama yapılamaması; bu projede
+böyle bir sorgu yok. Randevunun hastaya, hekime, hizmete ve şubeye bağlantıları `Restrict`:
+bunlardan biri silinmeye çalışılırsa randevu geçmişi sessizce silinmiyor, işlem hata veriyor.
+Şubenin çalışma saatleri ve hekimin müsaitlik aralıkları ise sahibine ait, sahibiyle siliniyor.
+"Aktif randevu" sorgusu durum nesnesini çalıştıramadığı için `AppointmentState.ActiveStatuses`
+listesini kullanıyor; liste elle yazılmadı, durum sınıflarının `IsActive` cevabından çıkıyor (K5).
+
+**K39 – Örnek veri alan metotlarıyla ve kurallardan geçirilerek, bugüne göre üretiliyor.**
+3 şube, 8 bölüm, 10 hizmet, 8 hekim (bazıları iki şubede), her şubede bir asistan ve bir şube
+yöneticisi, bir zincir yöneticisi, 8 hasta ve 50'den fazla randevu. Randevular iki hafta öncesi,
+geçen hafta, bugün, gelecek hafta ve iki hafta sonrasına yerleşiyor; bugünün randevuları hekimlerin
+bugünkü müsaitliğinden üretiliyor. Böylece veritabanı hangi gün oluşturulursa oluşturulsun
+takvimde, onay kuyruğunda (saati geçmiş bekleyen randevu dahil) ve "Randevularım"da gösterilecek
+bir şey oluyor; altı durumun hepsi var. Nesneler `AddAvailability`, `Approve`, `Complete` gibi
+alan metotlarıyla kuruluyor, her randevu da kayıttaki kurallardan (geçmiş saat kuralı hariç)
+geçiriliyor. Elle yazılmış plandaki bir randevu kuralı çiğnerse uygulama açılmıyor ve hangi
+randevunun neden tutmadığını yazıyor; sessizce atlamak yerine bunu seçtim. Bütün örnek hesapların
+parolası aynı (`SampleData.DemoPassword`) ama her biri ayrı tuzla özetlenip saklanıyor. Parola
+özetleyici (`IPasswordHasher`, K15) bu yüzden giriş gününden (11 Kasım) bir gün önce eklendi;
+giriş ekranı hâlâ 11 Kasım'da.
+*Alternatif:* sabit tarihli örnek veri (ör. hep 16 Kasım haftası). Daha basit ama sunum günü
+bütün randevular geçmişte kalırdı. EF Core'un `HasData` özelliği de düşünülebilirdi; ama o, satırları
+migration'a sabit değer olarak yazıyor, alan metotlarını ve kuralları atlıyor.
+
+**K40 – Veri katmanı testleri aynı test projesinde, gerçek SQLite dosyasıyla.**
+EF Core eşlemelerinin ve randevu işleminin doğruluğu ancak gerçek veritabanıyla anlaşılıyor;
+EF Core'un bellek içi sağlayıcısı işlem ve kilit desteklemediği için K19'u sınayamazdı. Her test
+geçici klasörde kendi SQLite dosyasını açıp şemayı migration'larla kuruyor; yani testler migration'ların
+sıfırdan çalıştığını da gösteriyor. Ayrı bir test projesi açmadım, test projesine Web referansı
+ekledim: proje küçük ve tek `dotnet test` komutuyla her şeyin çalışması sunumda daha kolay.
+Örnek veri testi haftanın yedi günü için ayrı ayrı çalışıyor ve tutarlılığı kural sınıflarını
+kullanmadan, doğrudan alan metotlarıyla kontrol ediyor; örnek veriyi üreten kodla aynı kodu
+kullansaydı bir hata ikisinde birden olurdu.
 
 ## 5. İlk sınıf taslağı
 

@@ -56,7 +56,7 @@ Ekranları çizerken alan modelinde olmayan birkaç ayrıntı çıktı. Durumlar
 
 1. Boş saatler **15 dakikada bir** başlıyor. *Kodda var (K32, 9 Kasım).*
 2. Hasta randevu alırken **hekime kısa bir not** yazabiliyor; kuyrukta randevunun **ne zaman alındığı**
-   görünüyor. *Onaylandı (K35), 10 Kasım'da koda girecek.*
+   görünüyor. *Onaylandı (K35), kodda var (10 Kasım).*
 3. Reddederken **gerekçe** yazılıyor ve hastaya gösteriliyor. *Kodda var (`RejectionReason`).*
 4. İleri tarihte randevusu olan müsaitlik aralığı **silinemiyor**; şube çalışma saati daraltılırken
    dışarıda kalan müsaitlik varsa kayıt engelleniyor. Etkilenen kayıtların listelenmesi kapsam dışı.
@@ -96,7 +96,7 @@ ekranındaki tabloyla aynı bilgiyi veren haftalık görünüm kaldırıldı.
 
 | Gün | İş |
 |---|---|
-| 10 Kas | `Appointment`'a hasta notu (en fazla 500 karakter) ve oluşturulma zamanı (K35). `Dentist` hata mesajlarında "Serdivan Şubesi şubesinde" gibi tekrar eden ek düzeltilecek (şube adı zaten "Şubesi" ile bitiyor). |
+| 10 Kas | ✓ Yapıldı. `Appointment`'a hasta notu (en fazla 500 karakter) ve oluşturulma zamanı (K35). `Dentist` hata mesajlarındaki "Serdivan Şubesi şubesinde" tekrarı düzeltildi; şube adı artık kural mesajlarındaki gibi parantez içinde yazıyor ("… bu şubede çalışmıyor (Serdivan Şubesi)"). |
 | 12 Kas | Kural mesajları ekrandaki metinle aynı olacak: "Dt. Ayşe Kaya bu saat aralığında başka bir randevuda." ve "Serdivan Şubesi'ndeki 4 ünitin hepsi bu saat aralığının bir kısmında dolu." |
 | 13 Kas | İleri tarihte aktif randevusu olan müsaitlik aralığı silinemeyecek (servis katmanında; `Dentist.RemoveAvailability` şu an koşulsuz). `BranchManager.CanCancel` ve `ChainAdministrator.CanCancel` `false` olacak, testleri güncellenecek (K34). |
 | 14 Kas | Hekim kaydı ve ortak bilgileri sadece zincir yöneticisi; şube yöneticisi atama/çıkarma ve asistan hesabı. Şube saati daraltılırken dışarıda kalan müsaitlik kontrolü (K24). |

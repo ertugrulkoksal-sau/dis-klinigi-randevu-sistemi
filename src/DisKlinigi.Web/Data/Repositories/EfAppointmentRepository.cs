@@ -1,0 +1,92 @@
+using DisKlinigi.Core.Abstractions;
+using DisKlinigi.Core.Domain;
+using DisKlinigi.Core.Domain.Appointments;
+using DisKlinigi.Core.Domain.Users;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+
+namespace DisKlinigi.Web.Data.Repositories;
+
+/// <summary>
+/// Randevu planlayıcısının ihtiyaç duyduğu sorgular ve randevu alma işlemi (K17, K19).
+/// </summary>
+public class EfAppointmentRepository : IAppointmentRepository
+{
+    private readonly AppDbContext _db;
+
+    public EfAppointmentRepository(AppDbContext db)
+    {
+        _db = db;
+    }
+
+    /// <remarks>
+    /// Tek sorgu: o günle kesişen, durumu aktif olan ve hekime, hastaya ya da şubeye ait
+    /// randevular. Kurallar diğer randevunun hekimine, hastasına ve şubesine baktığı için
+    /// (<c>IsSameAs</c>, mesajlardaki şube adı) bu üçü birlikte yükleniyor. Aralık yarı açık:
+    /// önceki gün 23:00'te biten randevu bu güne girmiyor.
+    /// </remarks>
+    public async Task<IReadOnlyList<Appointment>> GetActiveOnDateAsync(
+        Dentist dentist, Patient patient, Branch branch, DateOnly date, CancellationToken cancellationToken = default)
+    {
+        var dayStart = date.ToDateTime(TimeOnly.MinValue);
+        var dayEnd = dayStart.AddDays(1);
+        var active = AppointmentState.ActiveStatuses;
+        int dentistId = dentist.Id, patientId = patient.Id, branchId = branch.Id;
+
+        return await _db.Appointments
+            .Include(a => a.Patient)
+            .Include(a => a.Dentist)
+            .Include(a => a.Branch)
+            .Where(a => active.Contains(a.Status))
+            .Where(a => a.Period.Start < dayEnd && a.Period.End > dayStart)
+            .Where(a => a.Dentist.Id == dentistId || a.Patient.Id == patientId || a.Branch.Id == branchId)
+            .ToListAsync(cancellationToken);
+    }
+
+    public void Add(Appointment appointment)
+    {
+        ArgumentNullException.ThrowIfNull(appointment);
+        _db.Appointments.Add(appointment);
+    }
+
+    /// <remarks>
+    /// SQLite'ta <c>BeginTransactionAsync</c> işlemi <c>BEGIN IMMEDIATE</c> ile açıyor:
+    /// yazma kilidi okuma yapılmadan önce alınıyor. Aynı anda gelen ikinci istek burada
+    /// bekliyor (Microsoft.Data.Sqlite kilit açılana kadar komut zaman aşımı süresince
+    /// tekrar deniyor), ilk işlem bitince kontrolünü güncel veriyle yapıyor.
+    /// Bunun gerçekten böyle çalıştığını <c>EfAppointmentRepositoryTests</c> iki ayrı
+    /// bağlantıyla sınıyor.
+    /// </remarks>
+    public async Task<IBookingTransaction> BeginBookingTransactionAsync(CancellationToken cancellationToken = default)
+    {
+        var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
+        return new EfBookingTransaction(_db, transaction);
+    }
+
+    private sealed class EfBookingTransaction(AppDbContext db, IDbContextTransaction transaction) : IBookingTransaction
+    {
+        private bool _committed;
+
+        public async Task CommitAsync(CancellationToken cancellationToken = default)
+        {
+            await db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            _committed = true;
+        }
+
+        /// <summary>
+        /// Onaylanmadan kapatılan işlem geri alınıyor. Eklenmiş ama kaydedilmemiş randevular
+        /// da bağlamdan çıkarılıyor; yoksa aynı istekte sonraki bir <c>SaveChanges</c>
+        /// kuralları geçmemiş bir randevuyu kaydedebilirdi.
+        /// </summary>
+        public async ValueTask DisposeAsync()
+        {
+            if (!_committed)
+            {
+                foreach (var entry in db.ChangeTracker.Entries<Appointment>().Where(e => e.State == EntityState.Added).ToList())
+                    entry.State = EntityState.Detached;
+            }
+            await transaction.DisposeAsync();
+        }
+    }
+}

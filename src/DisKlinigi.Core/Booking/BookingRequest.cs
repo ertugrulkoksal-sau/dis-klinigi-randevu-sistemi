@@ -1,4 +1,5 @@
 using DisKlinigi.Core.Domain;
+using DisKlinigi.Core.Domain.Appointments;
 using DisKlinigi.Core.Domain.Users;
 
 namespace DisKlinigi.Core.Booking;
@@ -20,20 +21,25 @@ public sealed class BookingRequest
     public Branch Branch { get; }
     public TimeRange Period { get; }
 
-    public BookingRequest(Patient patient, Dentist dentist, Service service, Branch branch, DateTime start)
+    /// <summary>Hastanın hekime notu (K35); kurallar buna bakmıyor, randevuya olduğu gibi geçiyor.</summary>
+    public string? PatientNote { get; }
+
+    public BookingRequest(
+        Patient patient, Dentist dentist, Service service, Branch branch, DateTime start, string? patientNote = null)
     {
         Patient = patient ?? throw new DomainException("Randevunun hastası belirtilmelidir.");
         Dentist = dentist ?? throw new DomainException("Randevunun hekimi belirtilmelidir.");
         Service = service ?? throw new DomainException("Randevunun hizmeti belirtilmelidir.");
         Branch = branch ?? throw new DomainException("Randevunun şubesi belirtilmelidir.");
         Period = TimeRange.FromDuration(start, service.Duration);
+        PatientNote = Appointment.NormalizePatientNote(patientNote);
     }
 
     /// <summary>Randevunun günü; kurallar bu günün randevularıyla çalışıyor.</summary>
     public DateOnly Date => DateOnly.FromDateTime(Period.Start);
 
     /// <summary>Aynı hasta, hekim, hizmet ve şube için başka bir başlangıç saati (boş saat üretiminde).</summary>
-    public BookingRequest At(DateTime start) => new(Patient, Dentist, Service, Branch, start);
+    public BookingRequest At(DateTime start) => new(Patient, Dentist, Service, Branch, start, PatientNote);
 
     public override string ToString() => $"{Period} {Service.Name}, {Dentist.FullName}, {Branch.Name}";
 }

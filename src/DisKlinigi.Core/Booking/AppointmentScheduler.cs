@@ -52,7 +52,11 @@ public sealed class AppointmentScheduler
         if (violations.Count > 0)
             return BookingResult.Rejected(violations);
 
-        var appointment = new Appointment(request.Patient, request.Dentist, request.Service, request.Branch, request.Period.Start);
+        // Oluşturulma zamanı, kuralların kontrol edildiği "şu an" (K35); geçmiş saat kuralı
+        // geçtiği için başlangıçtan önce olduğu da kesin.
+        var appointment = new Appointment(
+            request.Patient, request.Dentist, request.Service, request.Branch, request.Period.Start,
+            createdAt: context.Now, request.PatientNote);
         _appointments.Add(appointment);
         await transaction.CommitAsync(cancellationToken);
 

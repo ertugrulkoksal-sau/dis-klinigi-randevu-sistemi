@@ -102,17 +102,7 @@ internal sealed class BookingClinic
     }
 
     /// <summary>Uygulamanın kullanacağı kurallar, tasarım.md bölüm 3'teki sırayla.</summary>
-    public static IReadOnlyList<IBookingRule> AllRules() =>
-    [
-        new FutureStartRule(),
-        new DentistOffersServiceRule(),
-        new BranchHostsDepartmentRule(),
-        new WorkingHoursRule(),
-        new DentistAvailabilityRule(),
-        new DentistOverlapRule(),
-        new PatientOverlapRule(),
-        new ChairCapacityRule()
-    ];
+    public static IReadOnlyList<IBookingRule> AllRules() => BookingRules.CreateDefault();
 
     public DateTime Now => Clock.GetLocalNow().DateTime;
 
@@ -127,7 +117,7 @@ internal sealed class BookingClinic
 
     /// <summary>Sistemde zaten var olan randevu (kurallardan geçirilmeden oluşturuluyor).</summary>
     public static Appointment Existing(Patient patient, Dentist dentist, Service service, Branch branch, DateTime start) =>
-        new(patient, dentist, service, branch, start);
+        new(patient, dentist, service, branch, start, createdAt: start.AddDays(-3));
 
     /// <summary>Salı günü için, şu anki saatle kural bağlamı.</summary>
     public BookingContext Context(params Appointment[] appointments) => new(Now, Tuesday, appointments);

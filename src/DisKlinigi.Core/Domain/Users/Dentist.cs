@@ -70,7 +70,7 @@ public class Dentist : User
     {
         if (_availability.Any(a => a.Branch.IsSameAs(branch)))
             throw new DomainException(
-                $"{FullName} için {branch.Name} şubesinde tanımlı müsaitlik aralıkları var; önce bu aralıklar silinmelidir.");
+                $"{FullName} için bu şubede tanımlı müsaitlik aralıkları var ({branch.Name}); önce bu aralıklar silinmelidir.");
         _branches.RemoveAll(b => b.IsSameAs(branch));
     }
 
@@ -100,7 +100,7 @@ public class Dentist : User
         ArgumentNullException.ThrowIfNull(hours);
 
         if (!WorksAt(branch))
-            throw new DomainException($"{FullName} {branch.Name} şubesinde çalışmıyor; önce şubeye atanmalıdır.");
+            throw new DomainException($"{FullName} bu şubede çalışmıyor ({branch.Name}); önce şubeye atanmalıdır.");
 
         var dayName = TurkishNames.Day(day);
         var branchHours = branch.GetWorkingHours(day)
@@ -108,7 +108,7 @@ public class Dentist : User
 
         if (!branchHours.Contains(hours))
             throw new DomainException(
-                $"{hours} aralığı, {branch.Name} şubesinin {dayName} çalışma saatine ({branchHours}) sığmıyor.");
+                $"{hours} aralığı, {branch.Name} {dayName} çalışma saatine ({branchHours}) sığmıyor.");
 
         var clash = _availability.FirstOrDefault(a => a.Day == day && a.Hours.Overlaps(hours));
         if (clash is not null)

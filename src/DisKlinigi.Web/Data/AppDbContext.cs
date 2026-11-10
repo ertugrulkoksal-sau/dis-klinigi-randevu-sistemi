@@ -1,10 +1,13 @@
 using DisKlinigi.Core.Domain;
+using DisKlinigi.Core.Domain.Appointments;
+using DisKlinigi.Core.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 
 namespace DisKlinigi.Web.Data;
 
 /// <summary>
-/// EF Core veritabanı bağlamı. Tablo eşlemeleri Fluent API ile burada yapılıyor;
+/// EF Core veritabanı bağlamı. Tablo eşlemeleri Fluent API ile <c>Configurations</c>
+/// klasöründe, her parça (şube, katalog, kullanıcılar, randevu) kendi dosyasında yapılıyor;
 /// böylece Core'daki alan sınıfları EF Core'a ait özniteliklerle kirlenmiyor.
 /// </summary>
 public class AppDbContext : DbContext
@@ -14,21 +17,14 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<Branch> Branches => Set<Branch>();
+    public DbSet<Department> Departments => Set<Department>();
+    public DbSet<Service> Services => Set<Service>();
+    public DbSet<User> Users => Set<User>();
+    public DbSet<Dentist> Dentists => Set<Dentist>();
+    public DbSet<Appointment> Appointments => Set<Appointment>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Branch>(b =>
-        {
-            b.ToTable("Branches");
-            b.Property(x => x.Name).HasMaxLength(100).IsRequired();
-            b.Property(x => x.City).HasMaxLength(50).IsRequired();
-            b.Property(x => x.Address).HasMaxLength(250);
-            b.HasIndex(x => x.Name).IsUnique();
-
-            // Çalışma saatleri ve bölümler alan modelinde var ama tablolara eşlenmeleri
-            // veritabanı adımında (10 Kasım) yapılacak; o zamana kadar EF Core bunları görmüyor.
-            b.Ignore(x => x.WorkingHours);
-            b.Ignore(x => x.Departments);
-        });
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
     }
 }

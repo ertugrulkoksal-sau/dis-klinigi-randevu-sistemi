@@ -26,6 +26,9 @@ public class Appointment : Entity
     /// <summary>Hasta randevusunu kendisi iptal edecekse randevuya bu süreden fazla olmalı (K4).</summary>
     public static readonly TimeSpan PatientCancellationNotice = TimeSpan.FromHours(24);
 
+    /// <summary>Hastanın hekime yazabileceği notun en fazla uzunluğu (K35).</summary>
+    public const int MaxPatientNoteLength = 500;
+
     public Patient Patient { get; private set; } = null!;
     public Dentist Dentist { get; private set; } = null!;
     public Branch Branch { get; private set; } = null!;
@@ -47,21 +50,57 @@ public class Appointment : Entity
     /// <summary>Reddedilen randevuda hastaya gösterilecek gerekçe; yazılmadıysa null.</summary>
     public string? RejectionReason { get; private set; }
 
+    /// <summary>Hastanın randevu alırken hekime yazdığı kısa not; yazılmadıysa null (K35).</summary>
+    public string? PatientNote { get; private set; }
+
+    /// <summary>Randevunun alındığı an; onay kuyruğunda gösteriliyor (K35).</summary>
+    public DateTime CreatedAt { get; private set; }
+
     private Appointment()
     {
     }
 
-    public Appointment(Patient patient, Dentist dentist, Service service, Branch branch, DateTime start)
+    /// <param name="createdAt">
+    /// Randevunun alındığı an. Planlayıcı "şu an"ı veriyor; örnek veride geçmiş randevular için
+    /// geçmiş bir an veriliyor (K30). Başlamış bir saate randevu alınmış olamayacağı için
+    /// başlangıçtan önce olmalı.
+    /// </param>
+    /// <param name="patientNote">Hastanın hekime notu; isteğe bağlı, en fazla 500 karakter.</param>
+    public Appointment(
+        Patient patient, Dentist dentist, Service service, Branch branch, DateTime start,
+        DateTime createdAt, string? patientNote = null)
     {
         Patient = patient ?? throw new DomainException("Randevunun hastası belirtilmelidir.");
         Dentist = dentist ?? throw new DomainException("Randevunun hekimi belirtilmelidir.");
         Service = service ?? throw new DomainException("Randevunun hizmeti belirtilmelidir.");
         Branch = branch ?? throw new DomainException("Randevunun şubesi belirtilmelidir.");
 
+        if (createdAt >= start)
+            throw new DomainException("Randevu, başlangıç saatinden önce alınmış olmalıdır.");
+
         Period = TimeRange.FromDuration(start, service.Duration);
         ServiceNameAtBooking = service.Name;
         PriceAtBooking = service.Price;
         Status = AppointmentState.Initial(service).Status;
+        CreatedAt = createdAt;
+        PatientNote = NormalizePatientNote(patientNote);
+    }
+
+    /// <summary>
+    /// Notu saklanacak hale getirir: boşsa null, değilse baştaki ve sondaki boşluklar
+    /// temizlenmiş hali. Sınırı aşan not kesilmiyor, hata veriyor; hastanın yazdığının
+    /// bir kısmını sessizce atmak istemedim. Randevu isteği de aynı kontrolü kullanıyor,
+    /// böylece uzun not kurallar çalışmadan önce fark ediliyor.
+    /// </summary>
+    public static string? NormalizePatientNote(string? note)
+    {
+        if (string.IsNullOrWhiteSpace(note))
+            return null;
+
+        var trimmed = note.Trim();
+        if (trimmed.Length > MaxPatientNoteLength)
+            throw new DomainException($"Hekime not en fazla {MaxPatientNoteLength} karakter olabilir.");
+        return trimmed;
     }
 
     private AppointmentState State => AppointmentState.For(Status);

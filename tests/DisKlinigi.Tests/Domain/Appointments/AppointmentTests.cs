@@ -20,6 +20,15 @@ public class AppointmentTests
     }
 
     [Fact]
+    public void Aktif_durumlar_listesi_durum_siniflarindan_cikar()
+    {
+        // Veritabanı sorgusu bu listeyi kullanıyor (EfAppointmentRepository); K5 ile aynı olmalı.
+        Assert.Equal(
+            [AppointmentStatus.PendingApproval, AppointmentStatus.Confirmed],
+            AppointmentState.ActiveStatuses);
+    }
+
+    [Fact]
     public void Otomatik_onayli_hizmette_randevu_onaylandi_olarak_olusur()
     {
         var appointment = _clinic.Book(_clinic.Examination);
@@ -58,10 +67,72 @@ public class AppointmentTests
         var c = _clinic;
         var start = TestClinic.AppointmentStart;
 
-        Assert.Throws<DomainException>(() => new Appointment(null!, c.Ayse, c.Examination, c.Serdivan, start));
-        Assert.Throws<DomainException>(() => new Appointment(c.Ali, null!, c.Examination, c.Serdivan, start));
-        Assert.Throws<DomainException>(() => new Appointment(c.Ali, c.Ayse, null!, c.Serdivan, start));
-        Assert.Throws<DomainException>(() => new Appointment(c.Ali, c.Ayse, c.Examination, null!, start));
+        var created = TestClinic.ClockStart;
+
+        Assert.Throws<DomainException>(() => new Appointment(null!, c.Ayse, c.Examination, c.Serdivan, start, created));
+        Assert.Throws<DomainException>(() => new Appointment(c.Ali, null!, c.Examination, c.Serdivan, start, created));
+        Assert.Throws<DomainException>(() => new Appointment(c.Ali, c.Ayse, null!, c.Serdivan, start, created));
+        Assert.Throws<DomainException>(() => new Appointment(c.Ali, c.Ayse, c.Examination, null!, start, created));
+    }
+
+    // ---- Hasta notu ve oluşturulma zamanı (K35) ----
+
+    [Fact]
+    public void Olusturulma_zamani_ve_hasta_notu_saklanir()
+    {
+        var c = _clinic;
+        var created = TestClinic.ClockStart;
+
+        var appointment = new Appointment(
+            c.Ali, c.Ayse, c.CanalTreatment, c.Serdivan, TestClinic.AppointmentStart, created,
+            "  Sol alt azı dişimde iki haftadır ağrı var.  ");
+
+        Assert.Equal(created, appointment.CreatedAt);
+        Assert.Equal("Sol alt azı dişimde iki haftadır ağrı var.", appointment.PatientNote);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Bos_hasta_notu_saklanmaz(string? note)
+    {
+        var c = _clinic;
+
+        var appointment = new Appointment(
+            c.Ali, c.Ayse, c.Examination, c.Serdivan, TestClinic.AppointmentStart, TestClinic.ClockStart, note);
+
+        Assert.Null(appointment.PatientNote);
+    }
+
+    [Fact]
+    public void Hasta_notu_500_karaktere_kadar_kabul_edilir_fazlasi_hata_verir()
+    {
+        var c = _clinic;
+        var start = TestClinic.AppointmentStart;
+        var created = TestClinic.ClockStart;
+
+        // Sınır: boşluklar temizlendikten sonraki uzunluk sayılıyor.
+        var atLimit = new Appointment(c.Ali, c.Ayse, c.Examination, c.Serdivan, start, created, " " + new string('a', 500) + " ");
+        Assert.Equal(500, atLimit.PatientNote!.Length);
+
+        var ex = Assert.Throws<DomainException>(
+            () => new Appointment(c.Ali, c.Ayse, c.Examination, c.Serdivan, start, created, new string('a', 501)));
+        Assert.Contains("500", ex.Message);
+    }
+
+    [Fact]
+    public void Randevu_baslangicindan_once_alinmis_olmali()
+    {
+        var c = _clinic;
+        var start = TestClinic.AppointmentStart;
+
+        // Başlangıçtan bir dakika önce alınabilir; tam başlangıçta ya da sonra alınamaz.
+        var justBefore = new Appointment(c.Ali, c.Ayse, c.Examination, c.Serdivan, start, start.AddMinutes(-1));
+        Assert.Equal(start.AddMinutes(-1), justBefore.CreatedAt);
+
+        Assert.Throws<DomainException>(() => new Appointment(c.Ali, c.Ayse, c.Examination, c.Serdivan, start, start));
+        Assert.Throws<DomainException>(() => new Appointment(c.Ali, c.Ayse, c.Examination, c.Serdivan, start, start.AddHours(1)));
     }
 
     [Fact]

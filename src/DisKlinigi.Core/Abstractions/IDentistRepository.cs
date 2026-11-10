@@ -1,0 +1,18 @@
+using DisKlinigi.Core.Domain.Users;
+
+namespace DisKlinigi.Core.Abstractions;
+
+/// <summary>Hekim verisine erişim (K17).</summary>
+public interface IDentistRepository
+{
+    /// <summary>
+    /// Hekimi bütün parçalarıyla getirir: uzmanlık, verdiği hizmetler (bölümleriyle),
+    /// çalıştığı şubeler (çalışma saatleri ve bölümleriyle) ve müsaitlik aralıkları.
+    /// </summary>
+    /// <remarks>
+    /// Randevu kuralları ve müsaitlik ekleme bu parçaların hepsine bakıyor; eksik yüklenmiş
+    /// bir hekim "bu hizmeti vermiyor" ya da "şube kapalı" gibi yanlış cevaplar verirdi.
+    /// Bu yüzden yarım yükleme seçeneği bilerek yok.
+    /// </remarks>
+    Task<Dentist?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+}
