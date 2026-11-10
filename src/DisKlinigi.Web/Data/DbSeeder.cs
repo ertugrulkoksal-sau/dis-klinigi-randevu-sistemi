@@ -1,4 +1,4 @@
-using DisKlinigi.Core.Domain;
+using DisKlinigi.Core.Abstractions;
 using Microsoft.EntityFrameworkCore;
 
 namespace DisKlinigi.Web.Data;
@@ -6,25 +6,46 @@ namespace DisKlinigi.Web.Data;
 /// <summary>
 /// Uygulama açılırken veritabanını günceller (migration) ve boşsa örnek veriyi
 /// yükler. Sunumda "dotnet run" dışında bir adım gerekmesin diye bu iş açılışta
-/// otomatik yapılıyor.
+/// otomatik yapılıyor (K18).
 /// </summary>
 public static class DbSeeder
 {
     public static async Task InitializeAsync(IServiceProvider services)
     {
         using var scope = services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var provider = scope.ServiceProvider;
+        var db = provider.GetRequiredService<AppDbContext>();
 
         await db.Database.MigrateAsync();
 
-        if (await db.Branches.AnyAsync())
-            return; // Örnek veri daha önce yüklenmiş.
+        // Örnek randevular bugünün tarihine göre yerleştiriliyor (K10: yerel saat).
+        var now = provider.GetRequiredService<TimeProvider>().GetLocalNow().DateTime;
+        await SeedAsync(db, provider.GetRequiredService<IPasswordHasher>(), now);
+    }
 
-        db.Branches.AddRange(
-            new Branch("Serdivan Şubesi", "Sakarya", "Kemalpaşa Mah. Üniversite Cad. No:12, Serdivan", chairCount: 4),
-            new Branch("Adapazarı Merkez Şubesi", "Sakarya", "Çark Cad. No:45, Adapazarı", chairCount: 3),
-            new Branch("Kadıköy Şubesi", "İstanbul", "Bağdat Cad. No:210, Kadıköy", chairCount: 5));
+    /// <summary>
+    /// Veritabanında hiç şube yoksa örnek veriyi tek seferde kaydeder; yüklediyse true döner.
+    /// Testler de bu metodu kendi saatleriyle çağırıyor.
+    /// </summary>
+    /// <remarks>
+    /// 6 Kasım'daki ilk sürüm sadece üç şube yüklüyordu. O sürümle oluşmuş bir veritabanında
+    /// şube olduğu için bu metot bir şey yapmıyor; yeni örnek veri için veritabanı dosyasını
+    /// silmek gerekiyor (README, "Örnek veriye sıfırdan dönmek").
+    /// </remarks>
+    public static async Task<bool> SeedAsync(
+        AppDbContext db, IPasswordHasher hasher, DateTime now, CancellationToken cancellationToken = default)
+    {
+        if (await db.Branches.AnyAsync(cancellationToken))
+            return false;
 
-        await db.SaveChangesAsync();
+        var data = SampleData.Create(hasher, now);
+        db.Departments.AddRange(data.Departments);
+        db.Services.AddRange(data.Services);
+        db.Branches.AddRange(data.Branches);
+        db.Users.AddRange(data.Users);
+        db.Appointments.AddRange(data.Appointments);
+
+        await db.SaveChangesAsync(cancellationToken);
+        return true;
     }
 }
