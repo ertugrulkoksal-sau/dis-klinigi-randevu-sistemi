@@ -2,8 +2,10 @@ using System.Globalization;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
 using DisKlinigi.Core.Abstractions;
+using DisKlinigi.Core.Booking;
 using DisKlinigi.Web.Data;
 using DisKlinigi.Web.Data.Repositories;
+using DisKlinigi.Web.Security;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -24,7 +26,19 @@ builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(sqlite.
 // 24 saat iptal kuralı gibi zamana bağlı kurallar testte sabit bir saatle sınanabilecek.
 builder.Services.AddSingleton(TimeProvider.System);
 
+// Repository'ler istek başına (scoped): her istek kendi DbContext'iyle çalışıyor.
 builder.Services.AddScoped<IBranchRepository, EfBranchRepository>();
+builder.Services.AddScoped<IDentistRepository, EfDentistRepository>();
+builder.Services.AddScoped<IAppointmentRepository, EfAppointmentRepository>();
+
+// Randevu kuralları durumsuz olduğu için tek örnek yeterli. Kayıt sırası, çiğnenen
+// kuralların kullanıcıya gösterildiği sıra (tasarım.md bölüm 3); planlayıcı listeyi
+// IEnumerable<IBookingRule> olarak bu sırayla alıyor.
+foreach (var rule in BookingRules.CreateDefault())
+    builder.Services.AddSingleton(rule);
+builder.Services.AddScoped<AppointmentScheduler>();
+
+builder.Services.AddSingleton<IPasswordHasher, AspNetPasswordHasher>();
 
 builder.Services.AddControllersWithViews();
 

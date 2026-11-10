@@ -6,7 +6,7 @@ namespace DisKlinigi.Core.Abstractions;
 
 /// <summary>
 /// Randevu verisine erişim. Sadece randevu planlayıcısının ihtiyaç duyduğu işlemler var (K17);
-/// EF Core ile gerçekleştirimi veritabanı adımında (10 Kasım) Web projesine ekleniyor.
+/// EF Core gerçekleştirimi Web projesinde (<c>EfAppointmentRepository</c>).
 /// </summary>
 public interface IAppointmentRepository
 {
