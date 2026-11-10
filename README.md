@@ -88,6 +88,16 @@ Aynı komutlar geçerli: `dotnet run --project src/DisKlinigi.Web` ve `dotnet te
 migration'larla kuruluyor ve örnek veri otomatik yükleniyor. Sonraki çalıştırmalarda
 mevcut veri korunuyor.
 
+Örnek veride 3 şube (Serdivan, Adapazarı Merkez, Kadıköy), 8 bölüm, 10 hizmet, 8 hekim, her
+şubede bir asistan ve bir şube yöneticisi, bir zincir yöneticisi ve 8 hasta var. Randevular
+veritabanının oluşturulduğu güne göre yerleşiyor: iki hafta öncesinden iki hafta sonrasına kadar,
+bugün dahil, her durumdan (onay bekliyor, onaylandı, reddedildi, iptal edildi, tamamlandı, gelmedi)
+randevu oluyor (tasarım kararı K39). Sunumdan önce veritabanını silip yeniden oluşturmak,
+randevuların sunum gününe göre dizilmesini sağlıyor.
+
+> 10 Kasım'dan önce oluşmuş bir veritabanında sadece üç şube vardı. Yeni örnek veri için
+> uygulamayı durdurup veritabanı dosyasını silin (aşağıdaki tabloda "Örnek veriye sıfırdan dönmek").
+
 ### Teslim paketi
 
 ```bash
@@ -104,7 +114,7 @@ src/
   DisKlinigi.Core/     Alan sınıfları, iş kuralları, arayüzler (altyapıdan bağımsız)
   DisKlinigi.Web/      MVC arayüzü, EF Core veri erişimi, örnek veri
 tests/
-  DisKlinigi.Tests/    Core için birim testleri
+  DisKlinigi.Tests/    Core için birim testleri; Data klasöründe SQLite üzerinde veri katmanı testleri
 docs/
   tasarim.md           Alan modeli, iş kuralları, tasarım kararları ve alternatifleri
   arayuz-tasarimi.md   Ekran tasarımlarının bağlantısı ve onay durumu
@@ -119,16 +129,16 @@ Tablo proje ilerledikçe dolduruluyor; "Durum" sütunu o maddenin hangi gün tam
 
 | Ödev maddesi | Sistemde karşılığı | Durum |
 |---|---|---|
-| Tek klinik ve çok şubeli kuruluş desteği | Zincir → şube modeli; tek klinik = tek şubeli zincir (tasarım K7) | İskelet: `Branch` (6 Kas) |
+| Tek klinik ve çok şubeli kuruluş desteği | Zincir → şube modeli; tek klinik = tek şubeli zincir (tasarım K7); örnek veride 3 şube, bazı hekimler iki şubede (K39) | İskelet: `Branch` (6 Kas); örnek veri (10 Kas) |
 | Klinikler yetki çerçevesinde tanımlanır | Zincir yöneticisi tüm şubeleri, şube yöneticisi sadece kendi şubesini yönetir (K3); `User.CanManageBranch` her rolde ayrı cevaplanıyor | Alan modeli ve testleri (7 Kas); ekran 14 Kas |
-| Çalışma saatleri ve bölümler | `Branch.SetWorkingHours` / `IsOpenDuring`, `Branch.AddDepartment`; saatler `TimeOfDayRange` değer nesnesiyle (K22) | Alan modeli ve testleri (7 Kas) |
+| Çalışma saatleri ve bölümler | `Branch.SetWorkingHours` / `IsOpenDuring`, `Branch.AddDepartment`; saatler `TimeOfDayRange` değer nesnesiyle (K22); veritabanında (şube, gün) anahtarlı tablo ve şube–bölüm ara tablosu (K37) | Alan modeli ve testleri (7 Kas); veritabanı ve testleri (10 Kas) |
 | Hizmetler süre ve ücretiyle | `Service`: süre (5 dk katı, en fazla 240 dk), ücret, onay gereksinimi (K2, K25) | Alan modeli ve testleri (7 Kas) |
-| Doktor ve sağlık personeli kaydı | Soyut `User` sınıfından türeyen `Dentist`, `Assistant` (K14) | Alan modeli ve testleri (7 Kas); ekran 14 Kas |
+| Doktor ve sağlık personeli kaydı | Soyut `User` sınıfından türeyen `Dentist`, `Assistant` (K14); bütün kullanıcılar tek tabloda (TPH), parolalar `PasswordHasher` ile özetli (K15, K37) | Alan modeli ve testleri (7 Kas); veritabanı (10 Kas); ekran 14 Kas |
 | Doktorun uzmanlık alanı ve verdiği hizmetler | `Dentist.Specialty`, `Dentist.OfferService` / `Offers`, çalıştığı şubeler | Alan modeli ve testleri (7 Kas) |
-| Müsaitlik aralıkları; randevu sadece bu aralıklara | `Dentist.AddAvailability` (şube saatine sığma, kesişme kontrolü), `Dentist.IsAvailable` (K8, K24); randevuda `DentistAvailabilityRule`, boş saatler de sadece bu aralıklardan üretiliyor (K32) | Alan modeli (7 Kas); kural ve testleri (9 Kas) |
+| Müsaitlik aralıkları; randevu sadece bu aralıklara | `Dentist.AddAvailability` (şube saatine sığma, kesişme kontrolü), `Dentist.IsAvailable` (K8, K24); randevuda `DentistAvailabilityRule`, boş saatler de sadece bu aralıklardan üretiliyor (K32); hekim bütün parçalarıyla `IDentistRepository` ile yükleniyor | Alan modeli (7 Kas); kural ve testleri (9 Kas); veritabanı (10 Kas) |
 | Personel ve hizmet seçerek randevu | Şube → bölüm → hizmet → hekim → saat akışı; boş saatler `AppointmentScheduler.GetFreeSlotsAsync` ile kayıttaki kuralların aynısından geçirilerek üretiliyor (K32) | Boş saat üretimi ve testleri (9 Kas); ekran 12 Kas |
-| Çakışma kontrolü | Strategy deseniyle sekiz `IBookingRule` sınıfı (geçmiş saat, hizmet, bölüm, çalışma saati, müsaitlik, hekim/hasta çakışması, ünit kapasitesi) + `AppointmentScheduler` (K12, K31, K33); ünit kapasitesinde en yüksek eş zamanlı randevu sayısı taranıyor; eş zamanlı istekler için kontrol ve kayıt tek işlemde (K19) | Kurallar, planlayıcı ve testleri (9 Kas); veritabanı işlemi 10 Kas |
-| Randevu detaylarının kaydı | `Appointment`: hasta, hekim, şube, `TimeRange` ile başlangıç/bitiş; hizmet adı ve ücreti randevu anındaki haliyle kopyalanıyor (K9, K30) | Alan modeli ve testleri (8 Kas); veritabanı 10 Kas |
+| Çakışma kontrolü | Strategy deseniyle sekiz `IBookingRule` sınıfı (geçmiş saat, hizmet, bölüm, çalışma saati, müsaitlik, hekim/hasta çakışması, ünit kapasitesi) + `AppointmentScheduler` (K12, K31, K33); ünit kapasitesinde en yüksek eş zamanlı randevu sayısı taranıyor; eş zamanlı istekler için kontrol ve kayıt tek işlemde, SQLite'ta `BEGIN IMMEDIATE` (K19) | Kurallar, planlayıcı ve testleri (9 Kas); veritabanı işlemi ve iki bağlantılı eş zamanlılık testleri (10 Kas) |
+| Randevu detaylarının kaydı | `Appointment`: hasta, hekim, şube, `TimeRange` ile başlangıç/bitiş; hizmet adı ve ücreti randevu anındaki haliyle kopyalanıyor (K9, K30); hasta notu ve alındığı an (K35); tabloda `Start`/`End` sütunları, durum metin olarak (K37, K38) | Alan modeli ve testleri (8 Kas); veritabanı ve testleri (10 Kas) |
 | Onay mekanizması | Hizmete göre ilk durum (K2); planlayıcı ile kaydedilen muayene "Onaylandı", tedavi "Onay bekliyor" olarak çıkıyor; State deseniyle Onay bekliyor → Onaylandı / Reddedildi, geçersiz geçiş hata veriyor (K13, K26, K28); onay yetkisi `User.CanApprove` (K27) | Alan modeli + 30 hücrelik geçiş tablosu testi (8 Kas); otomatik onay planlayıcıda (9 Kas); ekran 13 Kas |
 | Randevu iptali (hasta için 24 saat kuralı) | `Appointment.Cancel`, `User.CanCancel`; hasta 24 saatten fazla kala, personel her zaman (başlamadan önce) iptal eder (K4, K29) | Alan modeli ve sınır testleri (8 Kas); ekran 12–13 Kas |
 | Roller: Hasta, Doktor/Personel, Yönetici | `Patient`, `Dentist`, `Assistant`, `BranchManager`, `ChainAdministrator` (K14); randevu yetkileri her sınıfta ayrı (`CanApprove`, `CanCancel`) | Sınıflar (7 Kas); randevu yetkileri (8 Kas); giriş 11 Kas |
