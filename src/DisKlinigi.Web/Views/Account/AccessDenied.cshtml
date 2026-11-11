@@ -1,0 +1,18 @@
+@{
+    ViewData["Title"] = "Yetki yok";
+    var role = User.GetRole();
+}
+
+<h1 class="page-title">Bu sayfaya erişiminiz yok</h1>
+<p class="page-lead">
+    Açmaya çalıştığınız sayfa başka bir role ait. Menüde sadece sizin kullanabileceğiniz ekranlar görünüyor.
+</p>
+@if (role is { } r)
+{
+    var home = MainMenu.HomeFor(r);
+    <a asp-controller="@home.Controller" asp-action="@home.Action" class="btn btn-primary btn-touch">Ana sayfama dön</a>
+}
+else
+{
+    <a asp-controller="Account" asp-action="Login" class="btn btn-primary btn-touch">Giriş yap</a>
+}

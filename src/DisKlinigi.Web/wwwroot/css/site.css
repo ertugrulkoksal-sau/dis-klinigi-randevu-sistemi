@@ -1,31 +1,324 @@
-html {
-  font-size: 14px;
-}
+/*
+  Ortak görünüm: onaylı arayüz tasarımındaki renkler (açık gri zemin, beyaz kartlar,
+  petrol yeşili ana renk). Bootstrap'in hazır görünümü korunuyor, sadece renkleri ve
+  birkaç ölçüsü bu değişkenlerle değiştiriliyor (docs/arayuz-tasarimi.md, "Ortak kararlar").
+*/
+:root {
+  --dk-bg: #F5F7F8;
+  --dk-surface: #FFFFFF;
+  --dk-text: #1B2430;
+  --dk-muted: #5B6773;
+  --dk-border: #E2E8EC;
+  --dk-input-border: #C5CFD6;
+  --dk-primary: #0F766E;
+  --dk-primary-dark: #115E59;
+  --dk-primary-soft: #E6F4F2;
+  --dk-primary-soft-text: #0F5F58;
+  --dk-focus: #99D5CF;
+  --dk-danger: #B42318;
 
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
+  --bs-body-bg: var(--dk-bg);
+  --bs-body-color: var(--dk-text);
+  --bs-body-font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --bs-body-font-size: 15px;
+  --bs-link-color-rgb: 15, 118, 110;
+  --bs-link-hover-color-rgb: 17, 94, 89;
+  --bs-border-color: var(--dk-border);
 }
 
 body {
-  margin-bottom: 60px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--dk-bg);
 }
 
-.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-  color: var(--bs-secondary-color);
-  text-align: end;
+:focus-visible {
+  outline: 3px solid var(--dk-focus);
+  outline-offset: 2px;
 }
 
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-  text-align: start;
+.btn:focus-visible, .form-control:focus {
+  box-shadow: none;
+}
+
+.form-control:focus {
+  border-color: var(--dk-primary);
+  outline: 3px solid var(--dk-focus);
+  outline-offset: 0;
+}
+
+/* ---- Üst menü ---- */
+
+.site-header {
+  background: var(--dk-surface);
+  border-bottom: 1px solid var(--dk-border);
+}
+
+.site-header-inner, .page, .site-footer-inner {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+.site-header-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 24px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--dk-text);
+  font-weight: 700;
+  font-size: 17px;
+  text-decoration: none;
+}
+
+.brand svg {
+  color: var(--dk-primary);
+}
+
+.main-menu {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex: 1 1 auto;
+}
+
+.main-menu a {
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: var(--dk-text);
+  text-decoration: none;
+}
+
+.main-menu a:hover {
+  background: var(--dk-bg);
+}
+
+.main-menu a.active {
+  background: var(--dk-primary-soft);
+  color: var(--dk-primary-soft-text);
+  font-weight: 600;
+}
+
+.user-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.user-box form {
+  margin: 0;
+}
+
+.muted {
+  color: var(--dk-muted);
+}
+
+.link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--dk-muted);
+  text-decoration: underline;
+}
+
+.link-button:hover {
+  color: var(--dk-text);
+}
+
+/* ---- Sayfa ---- */
+
+.page {
+  flex: 1 0 auto;
+  padding-top: 40px;
+  padding-bottom: 56px;
+}
+
+.page-title {
+  margin: 0 0 6px;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.page-lead {
+  margin: 0 0 28px;
+  max-width: 640px;
+  color: var(--dk-muted);
+}
+
+.status-message {
+  margin-bottom: 20px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  background: var(--dk-primary-soft);
+  border: 1px solid #A7D9D2;
+  color: #0F4F49;
+  font-size: 14px;
+}
+
+.empty-note {
+  max-width: 720px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px dashed var(--dk-input-border);
+  background: #FAFBFC;
+  color: #3A4652;
+  font-size: 14px;
+}
+
+/* ---- Kartlar ve formlar ---- */
+
+.card-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.panel {
+  min-width: 0;
+  background: var(--dk-surface);
+  border: 1px solid var(--dk-border);
+  border-radius: 12px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.panel-login {
+  flex: 1 1 380px;
+}
+
+.panel-register {
+  flex: 1 1 460px;
+}
+
+.panel-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.field .form-label {
+  margin: 0;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.field-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 520px) {
+  .field-pair {
+    grid-template-columns: 1fr;
+  }
+
+  .panel {
+    padding: 20px;
+  }
+}
+
+/* Bootstrap kutunun zeminini sayfa zemininden alıyor; tasarımda kutular beyaz. */
+.form-control {
+  background-color: var(--dk-surface);
+  height: 44px;
+  border-color: var(--dk-input-border);
+  border-radius: 8px;
+}
+
+.form-control.input-validation-error {
+  border-color: var(--dk-danger);
+}
+
+.field-error {
+  color: var(--dk-danger);
+  font-size: 14px;
+}
+
+.field-error:empty {
+  display: none;
+}
+
+.optional {
+  font-weight: 400;
+  color: var(--dk-muted);
+}
+
+.hint {
+  margin: 0;
+  color: var(--dk-muted);
+  font-size: 14px;
+}
+
+/* ---- Butonlar ---- */
+
+.btn-touch {
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 20px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.btn-primary {
+  --bs-btn-bg: var(--dk-primary);
+  --bs-btn-border-color: var(--dk-primary);
+  --bs-btn-hover-bg: var(--dk-primary-dark);
+  --bs-btn-hover-border-color: var(--dk-primary-dark);
+  --bs-btn-active-bg: var(--dk-primary-dark);
+  --bs-btn-active-border-color: var(--dk-primary-dark);
+}
+
+.btn-outline-primary {
+  --bs-btn-color: var(--dk-primary);
+  --bs-btn-border-color: var(--dk-primary);
+  --bs-btn-hover-bg: var(--dk-primary);
+  --bs-btn-hover-border-color: var(--dk-primary);
+  --bs-btn-active-bg: var(--dk-primary-dark);
+  --bs-btn-active-border-color: var(--dk-primary-dark);
+  border-width: 1.5px;
+}
+
+/* ---- Alt bilgi ---- */
+
+.site-footer {
+  border-top: 1px solid var(--dk-border);
+  background: var(--dk-surface);
+  color: var(--dk-muted);
+  font-size: 13px;
+}
+
+.site-footer-inner {
+  padding-top: 16px;
+  padding-bottom: 16px;
 }

@@ -2,11 +2,14 @@ using System.Globalization;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
 using DisKlinigi.Core.Abstractions;
+using DisKlinigi.Core.Accounts;
 using DisKlinigi.Core.Booking;
 using DisKlinigi.Web.Data;
 using DisKlinigi.Web.Data.Repositories;
 using DisKlinigi.Web.Security;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.WebEncoders;
@@ -30,6 +33,7 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IBranchRepository, EfBranchRepository>();
 builder.Services.AddScoped<IDentistRepository, EfDentistRepository>();
 builder.Services.AddScoped<IAppointmentRepository, EfAppointmentRepository>();
+builder.Services.AddScoped<IUserRepository, EfUserRepository>();
 
 // Randevu kuralları durumsuz olduğu için tek örnek yeterli. Kayıt sırası, çiğnenen
 // kuralların kullanıcıya gösterildiği sıra (tasarım.md bölüm 3); planlayıcı listeyi
@@ -39,8 +43,33 @@ foreach (var rule in BookingRules.CreateDefault())
 builder.Services.AddScoped<AppointmentScheduler>();
 
 builder.Services.AddSingleton<IPasswordHasher, AspNetPasswordHasher>();
+builder.Services.AddScoped<AccountService>();
 
-builder.Services.AddControllersWithViews();
+// Kimlik doğrulama: ASP.NET Core Identity değil, çerez + kendi kullanıcı hiyerarşimiz (K15).
+// Çerez JavaScript'ten okunamıyor (HttpOnly); http üzerinden çalıştığımız için (K21)
+// Secure bayrağı isteğe göre veriliyor. Oturum 8 saat, kullanıldıkça uzuyor.
+builder.Services.AddScoped<UserSessionValidator>();
+builder.Services
+    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.LogoutPath = "/Account/Logout";
+        options.AccessDeniedPath = "/Account/AccessDenied";
+        options.Cookie.Name = "DisKlinigi.Oturum";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+        options.SlidingExpiration = true;
+        // Her istekte çerezdeki kullanıcı veritabanıyla karşılaştırılıyor (K42).
+        options.EventsType = typeof(UserSessionValidator);
+    });
+builder.Services.AddAuthorization(Policies.AddTo);
+
+// Bütün POST formları sahte istek (CSRF) belirteci istiyor; form tag helper'ı belirteci kendisi ekliyor.
+builder.Services.AddControllersWithViews(options =>
+    options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute()));
 
 // Razor varsayılan olarak ASCII dışındaki karakterleri (ş, ğ, ı...) HTML
 // varlıklarına çeviriyor; sayfa kaynağı okunabilir kalsın diye tüm Unicode serbest.
@@ -64,9 +93,12 @@ app.UseRequestLocalization(new RequestLocalizationOptions
 });
 
 app.UseRouting();
+app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapStaticAssets();
+// Varsayılan politika "giriş zorunlu" olduğu için (Policies.AddTo) CSS ve JS dosyaları
+// ayrıca herkese açılıyor; yoksa giriş sayfası stilsiz görünürdü.
+app.MapStaticAssets().AllowAnonymous();
 app.MapControllerRoute(
         name: "default",
         pattern: "{controller=Home}/{action=Index}/{id?}")
@@ -75,3 +107,6 @@ app.MapControllerRoute(
 await DbSeeder.InitializeAsync(app.Services);
 
 app.Run();
+
+// Testlerdeki WebApplicationFactory<Program> için (üst düzey ifadelerin sınıfı varsayılan olarak internal).
+public partial class Program;
