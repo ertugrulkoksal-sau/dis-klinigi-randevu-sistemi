@@ -19,6 +19,8 @@ public class BranchManager : User
         TransferTo(branch);
     }
 
+    public override Branch? AssignedBranch => Branch;
+
     public override UserRole Role => UserRole.BranchManager;
 
     /// <summary>Yetki sınırı burada: başka bir şube sorulursa cevap hayır.</summary>

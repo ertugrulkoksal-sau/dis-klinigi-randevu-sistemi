@@ -92,4 +92,27 @@ public class UserTests
 
         Assert.Null(patient.PhoneNumber);
     }
+
+    [Fact]
+    public void Sadece_asistan_ve_sube_yoneticisinin_bagli_oldugu_tek_sube_var()
+    {
+        var dentist = new Dentist("Ayşe Kaya", "ayse@ornek.com", Hash, Endodontics);
+        dentist.AssignToBranch(Serdivan);
+
+        Assert.Same(Serdivan, new Assistant("Elif Şahin", "elif@ornek.com", Hash, Serdivan).AssignedBranch);
+        Assert.Same(Serdivan, new BranchManager("Murat Çelik", "murat@ornek.com", Hash, Serdivan).AssignedBranch);
+        // Hekim birden fazla şubede çalışabildiği için "bağlı olduğu tek şube" yok.
+        Assert.Null(dentist.AssignedBranch);
+        Assert.Null(new Patient("Ali Yıldız", "ali@ornek.com", Hash).AssignedBranch);
+        Assert.Null(new ChainAdministrator("Selin Aydın", "selin@ornek.com", Hash).AssignedBranch);
+    }
+
+    [Theory]
+    [InlineData("  Ali.Yildiz@Ornek.COM ", "ali.yildiz@ornek.com")]
+    [InlineData("ali.yildiz@ornek.com", "ali.yildiz@ornek.com")]
+    [InlineData(null, "")]
+    public void Eposta_giriste_ve_kayitta_ayni_bicime_getirilir(string? input, string expected)
+    {
+        Assert.Equal(expected, User.NormalizeEmail(input));
+    }
 }

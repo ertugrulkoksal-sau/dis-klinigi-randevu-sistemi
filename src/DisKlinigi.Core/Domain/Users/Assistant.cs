@@ -20,6 +20,8 @@ public class Assistant : User
         TransferTo(branch);
     }
 
+    public override Branch? AssignedBranch => Branch;
+
     public override UserRole Role => UserRole.Assistant;
 
     public override bool CanManageBranch(Branch branch) => false;
