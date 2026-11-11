@@ -1,5 +1,12 @@
 # Diş Kliniği Randevu Sistemi
 
+**GitHub deposu:** https://github.com/ertugrulkoksal-sau/dis-klinigi-randevu-sistemi
+
+> **Commit geçmişi GitHub'da.** SABİS'e yüklenen .zip dosyasında `.git` klasörü yok; günlük
+> commit'ler ve Pull Request'ler (6–15 Kasım) yukarıdaki depoda görülebilir:
+> [commit geçmişi](https://github.com/ertugrulkoksal-sau/dis-klinigi-randevu-sistemi/commits/main),
+> [Pull Request'ler](https://github.com/ertugrulkoksal-sau/dis-klinigi-randevu-sistemi/pulls?q=is%3Apr).
+
 BSM515 Nesneye Dayalı Programlama dersi bireysel projesi (Seçenek A: Hastane/Klinik
 Randevu Sistemi). Ödevi çok şubeli bir diş kliniği zincirine uyarladım: hastalar şube,
 bölüm, hizmet ve hekim seçerek randevu alıyor; sistem hekim, hasta ve şubedeki diş
@@ -139,7 +146,8 @@ tests/
                        Web klasöründe uygulamanın kendisi üzerinden giriş ve yetki testleri
 docs/
   tasarim.md           Alan modeli, iş kuralları, tasarım kararları ve alternatifleri
-  arayuz-tasarimi.md   Ekran tasarımlarının bağlantısı ve onay durumu
+  arayuz-tasarimi.md   Onaylanan ekran tasarımları, onay durumu ve inceleme notları
+  arayuz/              Ekran tasarımlarının görüntüleri (PNG)
   gunluk-plan.md       6–15 Kasım çalışma planı
 scripts/
   teslim-zip.sh        SABİS'e yüklenecek .zip'i üretir

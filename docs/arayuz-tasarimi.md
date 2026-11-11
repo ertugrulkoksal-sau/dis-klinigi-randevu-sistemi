@@ -1,15 +1,15 @@
 # Arayüz Tasarımı
 
-Ekranları kod yazmadan önce tasarım kanvasında çizdim. Kanvas bağlantısı:
-
-**https://claude.ai/artifact/LqSo2athR6pzshgDTkbAhc**
+Ekranları kod yazmadan önce tasarladım ve onaya sundum; kodlama bu ekran tasarımlarına göre
+yapılıyor. Onaylanan ekranların görüntüleri [arayuz/](arayuz/) klasöründe ve aşağıda
+"Ekran tasarımları" bölümünde.
 
 **Onay durumu: onaylandı** (9 Kasım 2026, revizyon 1). 7 Kasım'da onaya sunuldu, 9 Kasım'da
 bağımsız inceleme sonrası düzeltildi ve bu haliyle onaylandı. Ekranlar 11 Kasım'dan itibaren
 bu revizyona göre kodlanacak.
 
-Kanvas şimdilik sadece bana açık; başkasına göstermek için sayfadaki Paylaş menüsünden paylaşmak gerekiyor.
-Onaydan sonra yapılacak tasarım değişiklikleri de önce kanvasta gösterilip sonra koda uygulanacak.
+Onaydan sonra yapılacak tasarım değişiklikleri de önce ekran tasarımlarında gösterilip sonra koda
+uygulanacak.
 
 ## Ekranlar
 
@@ -27,8 +27,57 @@ Onaydan sonra yapılacak tasarım değişiklikleri de önce kanvasta gösterilip
 | 5c | Şube personeli | Şube yöneticisi | Şube personeli tablosu, şubeye hekim atama, yeni asistan hesabı |
 | 5d | Hekim kaydı | Zincir yöneticisi | Zincirdeki bütün hekimler, yeni hekim formu (uzmanlık, verdiği hizmetler, çalışacağı şubeler) |
 
-Rol farklarını anlatan notlar ekranların içinden kanvas notlarına taşındı; ekranlarda sadece
+Rol farklarını anlatan notlar ekranların içinden ayrı tasarım notlarına taşındı; ekranlarda sadece
 kullanıcının göreceği metin kaldı. Kesikli çerçeveli kutular boş durum ve hata örnekleri.
+
+## Ekran tasarımları
+
+Görüntüler onaylanan revizyonun (9 Kasım, revizyon 1) kaynak dosyalarından alındı; 1280 piksel
+genişlikte masaüstü görünümü.
+
+### 1 · Giriş ve hasta kaydı
+
+![Giriş ve hasta kaydı](arayuz/01-giris-ve-hasta-kaydi.png)
+
+### 2a · Randevu al: şube, bölüm, hizmet, hekim
+
+![Randevu al: seçimler](arayuz/02a-randevu-al-secimler.png)
+
+### 2b · Randevu al: tarih/saat, özet ve onay
+
+![Randevu al: tarih, saat ve özet](arayuz/02b-randevu-al-tarih-saat-ozet.png)
+
+### 3 · Randevularım
+
+![Randevularım](arayuz/03-randevularim.png)
+
+### 4a · Hekim: günlük takvim
+
+![Hekim günlük takvim](arayuz/04a-hekim-gunluk-takvim.png)
+
+### 4b · Asistan: onay kuyruğu
+
+![Asistan onay kuyruğu](arayuz/04b-asistan-onay-kuyrugu.png)
+
+### 4c · Hekim: müsaitlik aralıkları
+
+![Hekim müsaitlik aralıkları](arayuz/04c-hekim-musaitlik-araliklari.png)
+
+### 5a · Zincir yöneticisi: şubeler ve çalışma saatleri
+
+![Şubeler ve çalışma saatleri](arayuz/05a-yonetici-subeler-ve-calisma-saatleri.png)
+
+### 5b · Zincir yöneticisi: bölümler ve hizmetler
+
+![Bölümler ve hizmetler](arayuz/05b-yonetici-bolumler-ve-hizmetler.png)
+
+### 5c · Şube yöneticisi: şube personeli
+
+![Şube personeli](arayuz/05c-sube-yoneticisi-personel.png)
+
+### 5d · Zincir yöneticisi: hekim kaydı
+
+![Hekim kaydı](arayuz/05d-zincir-yoneticisi-hekim-kaydi.png)
 
 ## Kodlanma durumu
 
@@ -36,8 +85,8 @@ kullanıcının göreceği metin kaldı. Kesikli çerçeveli kutular boş durum 
 |---|---|
 | 11 Kas | Ekran 1 (giriş ve hasta kaydı), ortak sayfa düzeni (role göre üst menü, kullanıcı satırı, çıkış), "yetki yok" sayfası. Renkler `site.css`'te değişken olarak; Bootstrap'in renkleri bunlarla değiştirildi. Diğer ekranların yerinde şimdilik "bu ekran X günü kodlanacak" yazan sayfa var (K44). |
 
-Tasarımdan bilerek ayrılan bir nokta yok. Kanvastaki "Prototip gezintisi" bağlantıları sadece
-kanvas için olduğundan uygulamaya alınmadı.
+Tasarımdan bilerek ayrılan bir nokta yok. Giriş ekranı tasarımındaki "Prototip gezintisi"
+bağlantıları sadece tasarımda ekranlar arasında gezinmek için olduğundan uygulamaya alınmadı.
 
 ## Ortak kararlar
 

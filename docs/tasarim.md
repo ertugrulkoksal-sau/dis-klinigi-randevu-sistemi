@@ -424,7 +424,7 @@ ve örnek veri aynı listeyi kullanıyor.
 ### Arayüz tasarımı incelemesinden sonra verilen kararlar (9 Kasım)
 
 Tasarımı çizen değil, ayrı bir inceleyici ekranları ödev maddeleri, bu doküman ve mevcut kodla
-karşılaştırdı. Bulgular ve kanvasta yapılan düzeltmeler [arayuz-tasarimi.md](arayuz-tasarimi.md)
+karşılaştırdı. Bulgular ve ekran tasarımlarında yapılan düzeltmeler [arayuz-tasarimi.md](arayuz-tasarimi.md)
 dosyasında. Alan modelini etkileyen kararlar şunlar:
 
 **K34 – Yöneticiler randevuya dokunmuyor; şube yöneticisi hekimin ortak bilgilerini düzenlemiyor.**
@@ -674,9 +674,9 @@ classDiagram
 
 ## 6. Ekranlar
 
-Ekranlar kod yazılmadan önce tasarım kanvasında çizildi (7 Kasım), bağımsız bir incelemeden
+Ekranlar kod yazılmadan önce tasarlandı (7 Kasım), bağımsız bir incelemeden
 sonra düzeltildi (9 Kasım) ve onaya sunuldu.
-Kanvas bağlantısı, ekranların ayrıntılı listesi ve onay durumu: [arayuz-tasarimi.md](arayuz-tasarimi.md).
+Ekran görüntüleri, ekranların ayrıntılı listesi ve onay durumu: [arayuz-tasarimi.md](arayuz-tasarimi.md).
 
 1. Giriş ve hasta kaydı
 2. Hasta: randevu alma akışı (şube → bölüm → hizmet → hekim → tarih/saat → özet ve onay)
