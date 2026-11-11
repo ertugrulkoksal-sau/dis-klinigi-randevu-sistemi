@@ -1,9 +1,10 @@
 using DisKlinigi.Core.Domain.Appointments;
+using DisKlinigi.Core.Domain.Users;
 
 namespace DisKlinigi.Core.Domain;
 
 /// <summary>
-/// Hata mesajlarında ve ekranda kullanılan Türkçe gün ve durum adları. İşletim sisteminin kültür
+/// Hata mesajlarında ve ekranda kullanılan Türkçe gün, durum ve rol adları. İşletim sisteminin kültür
 /// ayarına bağlı kalmasın diye (macOS/Windows farkı) sabit tablo olarak tutuluyor.
 /// </summary>
 public static class TurkishNames
@@ -30,5 +31,16 @@ public static class TurkishNames
         AppointmentStatus.Completed => "Tamamlandı",
         AppointmentStatus.NoShow => "Gelmedi",
         _ => throw new ArgumentOutOfRangeException(nameof(status))
+    };
+
+    /// <summary>Rolün menüde görünen adı (arayüz tasarımındaki "Ali Yıldız · Hasta" satırı).</summary>
+    public static string Role(UserRole role) => role switch
+    {
+        UserRole.Patient => "Hasta",
+        UserRole.Dentist => "Hekim",
+        UserRole.Assistant => "Asistan",
+        UserRole.BranchManager => "Şube yöneticisi",
+        UserRole.ChainAdministrator => "Zincir yöneticisi",
+        _ => throw new ArgumentOutOfRangeException(nameof(role))
     };
 }

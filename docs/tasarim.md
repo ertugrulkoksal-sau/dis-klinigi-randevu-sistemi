@@ -519,6 +519,73 @@ ekledim: proje küçük ve tek `dotnet test` komutuyla her şeyin çalışması 
 kullanmadan, doğrudan alan metotlarıyla kontrol ediyor; örnek veriyi üreten kodla aynı kodu
 kullansaydı bir hata ikisinde birden olurdu.
 
+### Kimlik doğrulamayı kodlarken verilen kararlar (11 Kasım)
+
+**K41 – İki katmanlı yetki: sayfa politikası kaba kapı, kayda bağlı karar alan sınıfında.**
+Her sayfanın bir politikası var (`Policies`: hasta, hekim+asistan, sadece hekim, yöneticiler,
+sadece zincir yöneticisi) ve bu politikalar çerezdeki role bakıyor. Bu sadece "bu ekranı açabilir
+mi?" sorusu. "Bu randevuyu onaylayabilir mi?", "bu şubeyi yönetebilir mi?" gibi kayda bağlı
+sorular K14'teki çok biçimli metotlarda kalıyor; çünkü cevap rolün yanında randevuya ve şubeye de
+bağlı: şube yöneticisi "Şubeler" ekranını açabiliyor ama içinde sadece `CanManageBranch`'in evet
+dediği şubeyi görecek. Rol değerine bakan iki yer var, politikalar ve menü (`MainMenu`); `UserRole`
+enum'unun 7 Kasım'daki açıklamasında öngörüldüğü gibi. Varsayılan politika "giriş zorunlu"
+(`FallbackPolicy`): `[Authorize]` yazmayı unuttuğum bir sayfa girişsiz açılmıyor; girişsiz açılması
+gerekenler (giriş, kayıt, hata sayfası, CSS/JS dosyaları) tek tek açıldı. Bütün POST formları
+CSRF belirteci istiyor (`AutoValidateAntiforgeryTokenAttribute`).
+*Alternatif:* her controller'da `if (User.IsInRole(...))` kontrolleri. Unutulması kolay ve her
+yerde tekrar ediyor; politika adıyla öznitelik hem kısa hem de testte tek tek denenebiliyor.
+*Alternatif 2:* ASP.NET Core'un kaynak tabanlı yetkilendirmesi (`IAuthorizationHandler` + randevu).
+Kayda bağlı kararları da politikaya taşırdı; ama karar zaten alan sınıfında ve Core'da test
+ediliyor, aynı kuralı framework'e ikinci kez bağlamak bir şey kazandırmıyor.
+
+**K42 – Giriş çerezi her istekte veritabanıyla karşılaştırılıyor.**
+Çerezde kullanıcının Id'si, e-postası, rolü ve menüde görünen adı var (parola ya da özeti yok);
+çerez ASP.NET Core'un veri koruma anahtarlarıyla şifreli ve imzalı. Çerez 8 saat geçerli ve
+kullanıldıkça uzuyor. Sorun, çerezin veritabanından bağımsız olması: sunumdan önce veritabanı silinip
+yeniden oluşturulursa eski çerezdeki Id artık yok ya da başka birine ait; rolü değiştirilen personel
+de eski yetkisiyle dolaşmaya devam ederdi. Bu yüzden `UserSessionValidator` her istekte kullanıcıyı
+Id'siyle okuyor: kullanıcı yoksa ya da rolü/e-postası değişmişse oturum kapanıyor, sadece adı ya da
+şubesi değişmişse çerez yenileniyor. Bedeli istek başına küçük bir sorgu.
+*Alternatif:* ASP.NET Core Identity'deki gibi bir "güvenlik damgası" sütunu ve belli aralıklarla
+kontrol. Daha az sorgu ama yeni bir sütun ve migration demek; bu projenin yükünde gerek yok.
+
+**K43 – Giriş hatası tek mesaj; parola kuralı sadece uzunluk; hesap kilitleme yok.**
+E-posta kayıtlı değilse de parola yanlışsa da ekranda aynı mesaj çıkıyor ("E-posta veya parola
+hatalı."); giriş formu hangi e-postaların kayıtlı olduğunu söylemiyor. Kayıt formu ise "bu e-posta
+kullanılıyor" demek zorunda; e-posta doğrulaması olmadan bunu gizlemenin yolu yok, bu yüzden
+girişte zamanlama farkını kapatmak gibi ek önlemler almadım. Parola en az 8, en fazla 128 karakter;
+büyük harf/rakam/sembol şartı koymadım, çünkü bu kurallar kullanıcıyı `Parola1!` gibi tahmin
+edilebilir kalıplara itiyor (üst sınır, PBKDF2'nin çok uzun girdiyle sunucuyu yormaması için).
+Parola kuralı Core'da (`AccountService`), ekrandaki form doğrulaması aynı sabiti kullanıyor.
+Hata alan formda parola alanları geri doldurulmuyor, parola sayfanın HTML'ine yazılmıyor. Girişten
+sonra sadece site içindeki bir adrese geri dönülüyor (`Url.IsLocalUrl`), yani giriş bağlantısı
+kullanıcıyı başka bir siteye yönlendirmek için kullanılamıyor.
+*Bilerek yapılmayanlar:* art arda yanlış denemede hesabı kilitleme, e-posta doğrulaması, parola
+sıfırlama. Üçü de e-posta gönderebilen bir altyapı ya da ek durum alanları istiyor ve ödevin
+kapsamında değil; kilitleme için `User`'a başarısız deneme sayısı ve kilit bitiş zamanı eklemek yeterli olur.
+
+**K44 – Ekranlar hedef kitleye göre üç controller'da; kodlanmamış ekranlar şimdilik yer tutucu.**
+`PatientController` (randevu al, randevularım), `ClinicController` (takvim, onay kuyruğu, müsaitlik)
+ve `AdminController` (şubeler, katalog, personel, hekim kaydı). Politikalar controller düzeyinde,
+istisnalar eylem düzeyinde (müsaitlik sadece hekim, hekim kaydı sadece zincir yöneticisi). Menüdeki
+bütün bağlantılar bugün var olan sayfalara gidiyor; içerikleri 12–14 Kasım'da dolacak ve o güne kadar
+"bu ekran X günü kodlanacak" yazıyor. Böylece rol bazlı erişim bugünden uçtan uca test edilebiliyor.
+Kök adres ayrı bir sayfa değil: girişli kullanıcı rolünün ilk ekranına, girişsiz kullanıcı giriş
+sayfasına gidiyor (tasarımda ilk ekran giriş/kayıt). 6 Kasım'daki şube listesi ana sayfadan kalktı,
+şubeler 14 Kasım'da yönetim panelinde görünecek.
+Kullanıcının bağlı olduğu tek şube `User.AssignedBranch` ile soruluyor (asistan ve şube yöneticisinde
+dolu, hekimde boş çünkü hekim birden fazla şubede çalışabiliyor); menüde "Asistan, Serdivan Şubesi"
+yazısı buradan geliyor. Sadece okunur bir özellik, veritabanında sütunu yok.
+
+**K45 – Giriş ve yetki, uygulamanın kendisi çalıştırılarak test ediliyor.**
+`AccountService` Core'da bellek içi repository ile test ediliyor; ama "yetkisiz sayfa açılmıyor"
+ya da "çerez veritabanıyla karşılaştırılıyor" gibi davranışlar `Program.cs`'teki kayıtlara bağlı.
+Bunlar için `WebApplicationFactory` uygulamayı bellekte bir test sunucusunda, gerçek kayıtlarla ve
+geçici bir SQLite dosyasıyla açıyor; testler tarayıcının yapacağı gibi formdaki CSRF belirtecini
+alıp formu gönderiyor. Rol × sayfa tablosu (5 rol, 9 sayfa) testte elle yazıldı, menüden türetilmedi;
+menü ya da bir politika yanlış rol listesi alırsa test düşüyor. Oturum doğrulayıcıyı ve statik
+dosyaların girişsiz açılmasını geçici olarak kaldırdığımda ilgili iki testin düştüğünü gördüm.
+
 ## 5. İlk sınıf taslağı
 
 Bu taslak 7–9 Kasım'da kodlanacak; README'deki son diyagram koddan çıkarılacak.

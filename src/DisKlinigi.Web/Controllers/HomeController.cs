@@ -1,25 +1,26 @@
 using System.Diagnostics;
-using DisKlinigi.Core.Abstractions;
 using DisKlinigi.Web.Models;
+using DisKlinigi.Web.Navigation;
+using DisKlinigi.Web.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DisKlinigi.Web.Controllers;
 
+[AllowAnonymous]
 public class HomeController : Controller
 {
-    private readonly IBranchRepository _branches;
-
-    // Controller somut EF sınıfını değil arayüzü istiyor; hangi sınıfın
-    // verileceğine Program.cs'teki DI kaydı karar veriyor.
-    public HomeController(IBranchRepository branches)
+    /// <summary>
+    /// Kök adres ayrı bir sayfa değil: girişli kullanıcı kendi rolünün ilk ekranına, girişsiz
+    /// kullanıcı giriş sayfasına gidiyor (arayüz tasarımında ilk ekran giriş/kayıt).
+    /// </summary>
+    public IActionResult Index()
     {
-        _branches = branches;
-    }
+        if (User.GetRole() is not { } role)
+            return RedirectToAction(nameof(AccountController.Login), "Account");
 
-    public async Task<IActionResult> Index(CancellationToken cancellationToken)
-    {
-        var branches = await _branches.GetAllAsync(cancellationToken);
-        return View(branches);
+        var home = MainMenu.HomeFor(role);
+        return RedirectToAction(home.Action, home.Controller);
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

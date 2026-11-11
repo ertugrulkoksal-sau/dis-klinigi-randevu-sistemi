@@ -30,6 +30,15 @@ Onaydan sonra yapılacak tasarım değişiklikleri de önce kanvasta gösterilip
 Rol farklarını anlatan notlar ekranların içinden kanvas notlarına taşındı; ekranlarda sadece
 kullanıcının göreceği metin kaldı. Kesikli çerçeveli kutular boş durum ve hata örnekleri.
 
+## Kodlanma durumu
+
+| Gün | Kodlanan |
+|---|---|
+| 11 Kas | Ekran 1 (giriş ve hasta kaydı), ortak sayfa düzeni (role göre üst menü, kullanıcı satırı, çıkış), "yetki yok" sayfası. Renkler `site.css`'te değişken olarak; Bootstrap'in renkleri bunlarla değiştirildi. Diğer ekranların yerinde şimdilik "bu ekran X günü kodlanacak" yazan sayfa var (K44). |
+
+Tasarımdan bilerek ayrılan bir nokta yok. Kanvastaki "Prototip gezintisi" bağlantıları sadece
+kanvas için olduğundan uygulamaya alınmadı.
+
 ## Ortak kararlar
 
 - **Renkler:** açık gri zemin, beyaz kartlar, ana renk petrol yeşili. Durum rozetleri hem renk hem

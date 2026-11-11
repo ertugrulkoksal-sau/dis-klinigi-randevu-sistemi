@@ -1,0 +1,73 @@
+@model AccountPageViewModel
+@using DisKlinigi.Core.Accounts
+@{
+    ViewData["Title"] = "Giriş";
+}
+
+<h1 class="page-title">Hoş geldiniz</h1>
+<p class="page-lead">Randevu almak için giriş yapın. İlk kez geliyorsanız hasta kaydı oluşturabilirsiniz.</p>
+
+<div class="card-row">
+    <section class="panel panel-login" aria-labelledby="girisBaslik">
+        <h2 id="girisBaslik" class="panel-title">Giriş yap</h2>
+        <form asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="stack">
+            <div class="field">
+                <label asp-for="Login.Email" class="form-label"></label>
+                <input asp-for="Login.Email" class="form-control" autocomplete="username" />
+                <span asp-validation-for="Login.Email" class="field-error"></span>
+            </div>
+            <div class="field">
+                <label asp-for="Login.Password" class="form-label"></label>
+                <input asp-for="Login.Password" class="form-control" autocomplete="current-password" />
+                <span asp-validation-for="Login.Password" class="field-error"></span>
+            </div>
+            <button type="submit" class="btn btn-primary btn-touch">Giriş yap</button>
+        </form>
+        <p class="hint">
+            Hekim, asistan ve yönetici hesapları klinik tarafından açılır; aynı ekrandan giriş yapılır.
+            Girişten sonra herkes kendi rolünün ana sayfasına yönlenir.
+        </p>
+    </section>
+
+    <section class="panel panel-register" aria-labelledby="kayitBaslik">
+        <h2 id="kayitBaslik" class="panel-title">Hasta kaydı</h2>
+        <form asp-action="Register" method="post" class="stack">
+            <span asp-validation-for="Register" class="field-error"></span>
+            <div class="field">
+                <label asp-for="Register.FullName" class="form-label"></label>
+                <input asp-for="Register.FullName" class="form-control" autocomplete="name" />
+                <span asp-validation-for="Register.FullName" class="field-error"></span>
+            </div>
+            <div class="field">
+                <label asp-for="Register.Email" class="form-label"></label>
+                <input asp-for="Register.Email" class="form-control" autocomplete="email" />
+                <span asp-validation-for="Register.Email" class="field-error"></span>
+            </div>
+            <div class="field">
+                <label asp-for="Register.PhoneNumber" class="form-label">
+                    Cep telefonu <span class="optional">(isteğe bağlı)</span>
+                </label>
+                <input asp-for="Register.PhoneNumber" class="form-control" autocomplete="tel" placeholder="05xx xxx xx xx" />
+                <span asp-validation-for="Register.PhoneNumber" class="field-error"></span>
+            </div>
+            <div class="field-pair">
+                <div class="field">
+                    <label asp-for="Register.Password" class="form-label"></label>
+                    <input asp-for="Register.Password" class="form-control" autocomplete="new-password" aria-describedby="parolaIpucu" />
+                    <span asp-validation-for="Register.Password" class="field-error"></span>
+                </div>
+                <div class="field">
+                    <label asp-for="Register.ConfirmPassword" class="form-label"></label>
+                    <input asp-for="Register.ConfirmPassword" class="form-control" autocomplete="new-password" />
+                    <span asp-validation-for="Register.ConfirmPassword" class="field-error"></span>
+                </div>
+            </div>
+            <p id="parolaIpucu" class="hint">En az @AccountService.MinimumPasswordLength karakter. Parolanız düz metin olarak saklanmaz.</p>
+            <button type="submit" class="btn btn-outline-primary btn-touch">Kaydol ve randevu al</button>
+        </form>
+    </section>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

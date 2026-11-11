@@ -22,8 +22,8 @@ public abstract class User : Entity
     public string Email { get; private set; } = null!;
 
     /// <summary>
-    /// Parolanın tuzlu özeti (hash). Bu sınıf düz parolayı hiç görmüyor; özet,
-    /// giriş adımında (11 Kasım) parola özetleyici servis tarafından üretiliyor.
+    /// Parolanın tuzlu özeti (hash). Bu sınıf düz parolayı hiç görmüyor; özeti
+    /// <see cref="Abstractions.IPasswordHasher"/> üretiyor (kayıtta <c>AccountService</c>).
     /// </summary>
     public string PasswordHash { get; private set; } = null!;
 
@@ -39,6 +39,14 @@ public abstract class User : Entity
     }
 
     public abstract UserRole Role { get; }
+
+    /// <summary>
+    /// Kullanıcının bağlı olduğu tek şube; asistan ve şube yöneticisinde var, diğer rollerde yok.
+    /// Hekim birden fazla şubede çalışabildiği için onda da boş (şubeleri <c>Dentist.Branches</c>).
+    /// Menüde "Asistan, Serdivan Şubesi" gibi gösteriliyor; onay kuyruğu ve "Şubem" ekranı da
+    /// bunu kullanacak. Sadece okunur, EF Core bu özelliği sütun olarak eşlemiyor.
+    /// </summary>
+    public virtual Branch? AssignedBranch => null;
 
     /// <summary>Bu kullanıcı verilen şubenin çalışma saatlerini, bölümlerini, ünit sayısını ve personelini yönetebilir mi?</summary>
     public abstract bool CanManageBranch(Branch branch);
@@ -66,9 +74,15 @@ public abstract class User : Entity
         FullName = fullName.Trim();
     }
 
+    /// <summary>
+    /// E-postanın saklandığı biçim: baştaki/sondaki boşluklar atılmış, küçük harf. Kayıtta ve
+    /// girişte aynı metot kullanılıyor; böylece "Ali@Ornek.test " ile giriş yapan da hesabını buluyor.
+    /// </summary>
+    public static string NormalizeEmail(string? email) => email?.Trim().ToLowerInvariant() ?? string.Empty;
+
     public void ChangeEmail(string email)
     {
-        var normalized = email?.Trim().ToLowerInvariant() ?? string.Empty;
+        var normalized = NormalizeEmail(email);
         // MailAddress "Ad <adres>" gibi biçimleri de kabul ettiği için çözümlenen
         // adresin girilen metinle birebir aynı olmasını da istiyorum.
         if (!MailAddress.TryCreate(normalized, out var parsed) || parsed.Address != normalized)
