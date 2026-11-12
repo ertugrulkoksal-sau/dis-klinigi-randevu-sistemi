@@ -1,0 +1,138 @@
+@model BookingChoicesViewModel
+@using DisKlinigi.Core.Domain
+@{
+    ViewData["Title"] = "Randevu al";
+    string[] steps = ["Şube", "Bölüm", "Hizmet", "Hekim", "Tarih ve saat", "Özet ve onay"];
+    var current = Model.CurrentStep;
+}
+
+<h1 class="page-title">Randevu al</h1>
+<p class="page-lead wide">
+    Seçimleriniz bir sonraki adımı daraltıyor: şube sadece barındırdığı bölümleri, hekim listesi sadece
+    o hizmeti o şubede veren hekimleri gösteriyor.
+</p>
+
+<ol class="steps" aria-label="Randevu adımları">
+    @for (var i = 0; i < steps.Length; i++)
+    {
+        var number = i + 1;
+        var done = number < current || (number == 4 && Model.Dentist is not null);
+        var state = done ? "done" : number == current ? "current" : "todo";
+        <li class="step step-@state" aria-current="@(state == "current" ? "step" : null)">
+            <span class="step-mark" aria-hidden="true">@(done ? "✓" : number.ToString())</span>
+            @steps[i]
+        </li>
+    }
+</ol>
+
+<section class="panel booking-section" aria-labelledby="subeBaslik">
+    <h2 id="subeBaslik" class="section-title">1. Şube</h2>
+    <div class="choice-grid">
+        @foreach (var branch in Model.Branches)
+        {
+            var selected = branch.IsSameAs(Model.Branch);
+            <a class="choice-card @(selected ? "selected" : null)" aria-current="@(selected ? "true" : null)"
+               asp-action="Book" asp-route-branchId="@branch.Id">
+                <strong>@branch.Name</strong>
+                <span class="muted">@branch.City · @branch.Address</span>
+                <span class="muted small">@Display.WorkingHours(branch)</span>
+            </a>
+        }
+    </div>
+</section>
+
+@if (Model.Branch is { } chosenBranch)
+{
+    <section class="panel booking-section" aria-labelledby="bolumBaslik">
+        <h2 id="bolumBaslik" class="section-title">
+            2. Bölüm <span class="section-note">— @(TurkishNames.Locative(chosenBranch.Name))ki bölümler</span>
+        </h2>
+        <div class="pill-row">
+            @foreach (var department in Model.Departments)
+            {
+                var selected = department.IsSameAs(Model.Department);
+                <a class="pill @(selected ? "selected" : null)" aria-current="@(selected ? "true" : null)"
+                   asp-action="Book" asp-route-branchId="@chosenBranch.Id" asp-route-departmentId="@department.Id">@department.Name</a>
+            }
+        </div>
+    </section>
+}
+
+@if (Model.Department is { } chosenDepartment)
+{
+    <section class="panel booking-section" aria-labelledby="hizmetBaslik">
+        <h2 id="hizmetBaslik" class="section-title">3. Hizmet</h2>
+        <div class="service-list">
+            @foreach (var service in Model.Services)
+            {
+                var selected = service.IsSameAs(Model.Service);
+                <a class="service-row @(selected ? "selected" : null)" aria-current="@(selected ? "true" : null)"
+                   asp-action="Book" asp-route-branchId="@Model.Branch!.Id" asp-route-departmentId="@chosenDepartment.Id"
+                   asp-route-serviceId="@service.Id">
+                    <strong>@service.Name</strong>
+                    <span class="service-facts">
+                        <span class="muted">@Display.Minutes(service.Duration)</span>
+                        <strong>@Display.Price(service.Price)</strong>
+                        @if (service.RequiresApproval)
+                        {
+                            <span class="badge-status badge-pending">Onay gerekir</span>
+                        }
+                    </span>
+                </a>
+            }
+        </div>
+        <p class="hint">
+            Muayene ve kontrol gibi hizmetler otomatik onaylanır. "Onay gerekir" yazan tedaviler hekim ya da
+            şube asistanı onaylayınca kesinleşir.
+        </p>
+    </section>
+}
+
+@if (Model.Service is { } chosenService)
+{
+    var chosenBranchForDentist = Model.Branch!;
+    <section class="panel booking-section emphasis" aria-labelledby="hekimBaslik">
+        <h2 id="hekimBaslik" class="section-title">
+            4. Hekim <span class="section-note">— @TurkishNames.Locative(chosenBranchForDentist.Name) @Display.InSentence(chosenService.Name) yapan hekimler</span>
+        </h2>
+        @if (Model.Dentists.Count == 0)
+        {
+            <div class="empty-note">
+                Bu hizmeti @TurkishNames.Locative(chosenBranchForDentist.Name) şu an veren hekim yok. Başka bir şube seçebilirsiniz.
+            </div>
+        }
+        else
+        {
+            <div class="choice-grid">
+                @foreach (var dentist in Model.Dentists)
+                {
+                    var selected = dentist.IsSameAs(Model.Dentist);
+                    <a class="choice-card dentist-card @(selected ? "selected" : null)" aria-current="@(selected ? "true" : null)"
+                       asp-action="Book" asp-route-branchId="@chosenBranchForDentist.Id" asp-route-departmentId="@Model.Department!.Id"
+                       asp-route-serviceId="@chosenService.Id" asp-route-dentistId="@dentist.Id">
+                        <span class="avatar" aria-hidden="true">@Display.Initials(dentist.FullName)</span>
+                        <span class="dentist-text">
+                            <strong>@dentist.FullName</strong>
+                            <span class="muted">Uzmanlık: @dentist.Specialty.Name</span>
+                            <span class="muted small">Bu şubede: @Display.Availability(dentist, chosenBranchForDentist)</span>
+                        </span>
+                    </a>
+                }
+            </div>
+        }
+    </section>
+}
+
+<div class="form-actions">
+    <a asp-action="Appointments" class="btn btn-outline-secondary btn-touch">Vazgeç</a>
+    @if (Model.Dentist is { } chosenDentist)
+    {
+        <a asp-action="Schedule" asp-route-branchId="@Model.Branch!.Id" asp-route-serviceId="@Model.Service!.Id"
+           asp-route-dentistId="@chosenDentist.Id" class="btn btn-primary btn-touch">Devam: tarih ve saat</a>
+    }
+    else
+    {
+        <span class="btn btn-primary btn-touch disabled" aria-disabled="true" tabindex="0"
+              title="Devam etmek için şube, bölüm, hizmet ve hekim seçin.">Devam: tarih ve saat</span>
+    }
+</div>

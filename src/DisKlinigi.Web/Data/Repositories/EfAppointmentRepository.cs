@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 namespace DisKlinigi.Web.Data.Repositories;
 
 /// <summary>
-/// Randevu planlayıcısının ihtiyaç duyduğu sorgular ve randevu alma işlemi (K17, K19).
+/// Randevu planlayıcısının ve randevu işlemlerinin ihtiyaç duyduğu sorgular, randevu alma işlemi (K17, K19).
 /// </summary>
 public class EfAppointmentRepository : IAppointmentRepository
 {
@@ -42,6 +42,33 @@ public class EfAppointmentRepository : IAppointmentRepository
             .Where(a => a.Dentist.Id == dentistId || a.Patient.Id == patientId || a.Branch.Id == branchId)
             .ToListAsync(cancellationToken);
     }
+
+    public Task<Appointment?> GetByIdAsync(int id, CancellationToken cancellationToken = default) =>
+        _db.Appointments
+            .Include(a => a.Patient)
+            .Include(a => a.Dentist)
+            .Include(a => a.Branch)
+            .Include(a => a.Service)
+            .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
+
+    /// <remarks>
+    /// Liste ekranı için izlenmiyor (AsNoTracking). Ekranda hizmetin o anki adı değil randevudaki
+    /// kopyası (K9) gösterildiği için hizmet yüklenmiyor; hasta zaten bilinen kişi.
+    /// </remarks>
+    public async Task<IReadOnlyList<Appointment>> GetForPatientAsync(Patient patient, CancellationToken cancellationToken = default)
+    {
+        var patientId = patient.Id;
+        return await _db.Appointments
+            .AsNoTracking()
+            .Include(a => a.Patient)
+            .Include(a => a.Dentist)
+            .Include(a => a.Branch)
+            .Where(a => a.Patient.Id == patientId)
+            .OrderBy(a => a.Period.Start)
+            .ToListAsync(cancellationToken);
+    }
+
+    public Task SaveChangesAsync(CancellationToken cancellationToken = default) => _db.SaveChangesAsync(cancellationToken);
 
     public void Add(Appointment appointment)
     {

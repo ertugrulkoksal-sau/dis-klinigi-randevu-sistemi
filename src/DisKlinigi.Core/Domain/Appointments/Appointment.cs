@@ -113,6 +113,27 @@ public class Appointment : Entity
     /// <summary>Randevu başlama anı geldi mi? Başlama anı dahil.</summary>
     public bool HasStarted(DateTime now) => now >= Period.Start;
 
+    /// <summary>
+    /// Saati tutuyor ve henüz başlamadı mı? Hastanın "Yaklaşan" listesi bu; geri kalan her şey
+    /// (sonuçlanan ya da saati gelmiş randevular) "Geçmiş ve sonuçlananlar"a düşüyor.
+    /// </summary>
+    public bool IsUpcoming(DateTime now) => IsActive && !HasStarted(now);
+
+    /// <summary>
+    /// Hâlâ onay bekliyor ama saati geldi mi? Bu randevu artık onaylanamıyor, sadece ret ile
+    /// kapatılabiliyor (K28); ekranda "Saati geçti" rozetiyle gösteriliyor.
+    /// </summary>
+    public bool IsOverdue(DateTime now) => Status == AppointmentStatus.PendingApproval && HasStarted(now);
+
+    /// <summary>
+    /// Bu kullanıcının bu randevuyla bir ilgisi var mı: randevunun hastası mı, ya da randevuyu
+    /// onaylayabilecek personelden mi (hekimi, şubenin asistanı)? İlgisi olmayan biri randevuyu
+    /// Id'siyle bulup durumunu öğrenemesin diye işlem yapmadan önce soruluyor. Personel tarafı
+    /// <see cref="User.CanApprove"/>'un çok biçimli cevabından geliyor; burada rol kontrolü yok.
+    /// </summary>
+    public bool Involves(User user) =>
+        user is not null && (Patient.IsSameAs(user) || user.CanApprove(this));
+
     public void Approve(User by, DateTime now) => State.Approve(this, Require(by), now);
 
     /// <summary>

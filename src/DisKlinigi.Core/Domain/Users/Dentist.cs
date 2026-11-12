@@ -140,4 +140,42 @@ public class Dentist : User
     /// </summary>
     public bool IsAvailable(Branch branch, TimeRange period) =>
         _availability.Any(a => a.Covers(branch, period));
+
+    /// <summary>
+    /// Hasta bu hekimden bu şubede bu hizmet için randevu alabilir mi? Randevu ekranındaki hekim
+    /// listesi bununla daraltılıyor: hekim şubede çalışıyor, hizmeti veriyor, şube hizmetin
+    /// bölümünü barındırıyor ve hekimin o şubede en az bir müsaitlik aralığı var.
+    /// </summary>
+    /// <remarks>
+    /// Kayıttaki kuralların (<c>DentistOffersServiceRule</c>, <c>BranchHostsDepartmentRule</c>,
+    /// <c>DentistAvailabilityRule</c>) saatten bağımsız kısmı. Listede görünen ama hiç boş saati
+    /// çıkmayan hekim olmasın diye müsaitliği olmayan hekim de eleniyor. Saate bağlı kurallar
+    /// (çakışma, ünit) gün ve saat seçilince boş saat listesinde çalışıyor.
+    /// </remarks>
+    public bool CanServe(Branch branch, Service service)
+    {
+        ArgumentNullException.ThrowIfNull(branch);
+        ArgumentNullException.ThrowIfNull(service);
+
+        return WorksAt(branch)
+            && Offers(service)
+            && branch.HostsDepartment(service.Department)
+            && _availability.Any(a => a.Branch.IsSameAs(branch));
+    }
+
+    /// <summary>
+    /// <paramref name="from"/> gününden başlayarak <paramref name="days"/> gün içinde hekimin
+    /// bu şubede müsaitlik aralığı olan tarihler. Randevu ekranındaki gün seçimi bu liste.
+    /// </summary>
+    public IReadOnlyList<DateOnly> WorkingDaysAt(Branch branch, DateOnly from, int days)
+    {
+        ArgumentNullException.ThrowIfNull(branch);
+        ArgumentOutOfRangeException.ThrowIfNegative(days);
+
+        var weekdays = _availability.Where(a => a.Branch.IsSameAs(branch)).Select(a => a.Day).ToHashSet();
+        return Enumerable.Range(0, days)
+            .Select(from.AddDays)
+            .Where(date => weekdays.Contains(date.DayOfWeek))
+            .ToList();
+    }
 }

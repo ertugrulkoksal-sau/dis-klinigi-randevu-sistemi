@@ -84,9 +84,22 @@ genişlikte masaüstü görünümü.
 | Gün | Kodlanan |
 |---|---|
 | 11 Kas | Ekran 1 (giriş ve hasta kaydı), ortak sayfa düzeni (role göre üst menü, kullanıcı satırı, çıkış), "yetki yok" sayfası. Renkler `site.css`'te değişken olarak; Bootstrap'in renkleri bunlarla değiştirildi. Diğer ekranların yerinde şimdilik "bu ekran X günü kodlanacak" yazan sayfa var (K44). |
+| 12 Kas | Ekran 2a (şube, bölüm, hizmet, hekim; adım göstergesi, "Onay gerekir" rozeti, hekim yok boş durumu), ekran 2b (gün, boş saatler, özet kartı, hekime not, boş gün ve "kaydederken saat dolmuşsa" durumu), ekran 3 (yaklaşan randevular, iptal onay adımı, 24 saat kala pasif buton ve nedeni, geçmiş tablosu, ret gerekçesi, bütün durum rozetleri, boş durum). Ortak düzene sayfa üstü hata mesajı eklendi. Tasarımdaki kesikli "örnek" kutuları uygulamada sadece o durum gerçekten oluşunca görünüyor. |
 
-Tasarımdan bilerek ayrılan bir nokta yok. Giriş ekranı tasarımındaki "Prototip gezintisi"
-bağlantıları sadece tasarımda ekranlar arasında gezinmek için olduğundan uygulamaya alınmadı.
+Giriş ekranı tasarımındaki "Prototip gezintisi" bağlantıları sadece tasarımda ekranlar arasında
+gezinmek için olduğundan uygulamaya alınmadı.
+
+Tasarımdan bilerek ayrıldığım noktalar (12 Kasım):
+
+| Ekran | Tasarımda | Uygulamada | Neden |
+|---|---|---|---|
+| 2a | "Serdivan'da kanal tedavisi yapan hekimler" | "Serdivan Şubesi'nde kanal tedavisi yapan hekimler" | Şubenin kısa adı modelde yok; tam adı ve K48'deki ek yardımcısı kullanıldı. |
+| 2b | "Dt. Ayşe Kaya'nın Serdivan'da çalıştığı günler" | "hekimin bu şubede çalıştığı günler" | Kişi adına iyelik eki ("Kaya'nın") için ikinci bir dil kuralı yazmak gerekirdi; hekim ve şube zaten özet kartında yazıyor. |
+| 2b | Boş saatlerin altında o güne özel açıklama ("10:30'a kadar ve 12:15'ten sonra randevusu olduğu için…") | Sadece genel açıklama (15 dakikalık adım, dolu saatlerin gösterilmediği) | O cümle tasarımdaki örnek güne göre elle yazılmıştı; her gün için üretmek ayrı bir metin üretici demek. |
+| 2b | Sadece onay gerektiren hizmet için turuncu bilgi kutusu | Otomatik onaylı hizmette yeşil "otomatik onaylanır" kutusu | Tasarımda bu durumun örneği yoktu; hasta iki durumda da ne olacağını görsün diye. |
+| 2b | "Sonraki 2 hafta →" | Ayrıca "← Önceki 2 hafta" (ilk pencerede yok) | İleri gidince geri dönmenin tek yolu tarayıcının geri tuşu oluyordu. |
+| 3 | Geçmiş tablosunda şube kısa adıyla ("Serdivan") | Şubenin tam adı | 2a'daki ile aynı neden. |
+| 3 | "Saati geçti" rozeti sadece onay kuyruğunda | Hastanın geçmiş tablosunda da (onaylanmadan saati gelen randevu) | K28'deki durum hastaya da görünmeli; yoksa "Onay bekliyor" yazan geçmiş bir randevu kafa karıştırırdı. |
 
 ## Ortak kararlar
 
@@ -155,6 +168,6 @@ ekranındaki tabloyla aynı bilgiyi veren haftalık görünüm kaldırıldı.
 | Gün | İş |
 |---|---|
 | 10 Kas | ✓ Yapıldı. `Appointment`'a hasta notu (en fazla 500 karakter) ve oluşturulma zamanı (K35). `Dentist` hata mesajlarındaki "Serdivan Şubesi şubesinde" tekrarı düzeltildi; şube adı artık kural mesajlarındaki gibi parantez içinde yazıyor ("… bu şubede çalışmıyor (Serdivan Şubesi)"). |
-| 12 Kas | Kural mesajları ekrandaki metinle aynı olacak: "Dt. Ayşe Kaya bu saat aralığında başka bir randevuda." ve "Serdivan Şubesi'ndeki 4 ünitin hepsi bu saat aralığının bir kısmında dolu." |
+| 12 Kas | ✓ Yapıldı. Kural mesajları ekrandaki metinle aynı: "Dt. Ayşe Kaya bu saat aralığında başka bir randevuda." ve "Serdivan Şubesi'ndeki 4 ünitin hepsi bu saat aralığının bir kısmında dolu." Şube adına ek `TurkishNames.Locative` ile getiriliyor (K48). |
 | 13 Kas | İleri tarihte aktif randevusu olan müsaitlik aralığı silinemeyecek (servis katmanında; `Dentist.RemoveAvailability` şu an koşulsuz). `BranchManager.CanCancel` ve `ChainAdministrator.CanCancel` `false` olacak, testleri güncellenecek (K34). |
 | 14 Kas | Hekim kaydı ve ortak bilgileri sadece zincir yöneticisi; şube yöneticisi atama/çıkarma ve asistan hesabı. Şube saati daraltılırken dışarıda kalan müsaitlik kontrolü (K24). |

@@ -1,0 +1,118 @@
+@model PatientAppointmentsViewModel
+@{
+    ViewData["Title"] = "Randevularım";
+}
+
+<div class="title-row">
+    <h1 class="page-title">Randevularım</h1>
+    <a asp-action="Book" class="btn btn-primary btn-touch">Yeni randevu</a>
+</div>
+
+@if (Model.Upcoming.Count == 0 && Model.Past.Count == 0)
+{
+    <div class="empty-note">
+        <p>Henüz randevunuz yok.</p>
+        <a asp-action="Book" class="btn btn-primary btn-touch">Randevu al</a>
+    </div>
+}
+else
+{
+    <h2 class="list-title">Yaklaşan</h2>
+    @if (Model.Upcoming.Count == 0)
+    {
+        <p class="muted">Yaklaşan randevunuz yok.</p>
+    }
+    <div class="stack">
+        @foreach (var appointment in Model.Upcoming)
+        {
+            var (statusText, statusClass) = Display.Status(appointment, Model.Now);
+            var confirming = appointment.Id == Model.ConfirmCancelId;
+            var canCancel = Model.CanCancel(appointment);
+            <article id="randevu-@appointment.Id" class="appointment-card @(confirming ? "confirming" : null)" aria-label="@Display.ShortDateWithDay(appointment.Period.Start) @appointment.ServiceNameAtBooking">
+                <div class="appointment-main">
+                    <div class="appointment-when">
+                        <strong>@Display.ShortDateWithDay(appointment.Period.Start)</strong>
+                        <span class="muted">@appointment.Period.ToTimeString()</span>
+                    </div>
+                    <div class="appointment-what">
+                        <span><strong>@appointment.ServiceNameAtBooking</strong> <span class="muted">· @Display.Minutes(appointment.Duration)</span></span>
+                        <span class="muted">@appointment.Dentist.FullName · @appointment.Branch.Name · @Display.Price(appointment.PriceAtBooking)</span>
+                    </div>
+                    <span class="badge-status @statusClass">@statusText</span>
+                    <div class="appointment-actions">
+                        @if (confirming)
+                        {
+                            @* Onay adımı aşağıda açık. *@
+                        }
+                        else if (canCancel)
+                        {
+                            <a asp-action="Appointments" asp-route-cancel="@appointment.Id" asp-fragment="randevu-@appointment.Id"
+                               class="btn btn-outline-secondary btn-touch">İptal et…</a>
+                        }
+                        else
+                        {
+                            <span class="btn btn-outline-secondary btn-touch disabled" aria-disabled="true" tabindex="0"
+                                  aria-describedby="neden-@appointment.Id">İptal et</span>
+                            <span id="neden-@appointment.Id" class="small muted">24 saatten az kaldı; iptal için şubeyi arayın.</span>
+                        }
+                    </div>
+                </div>
+                @if (confirming)
+                {
+                    <div class="confirm-box" role="alert">
+                        <strong>Bu randevuyu iptal etmek istiyor musunuz?</strong>
+                        <span>İptal geri alınamaz; saat başka hastalara açılır. Aynı hizmet için daha sonra yeniden randevu alabilirsiniz.</span>
+                    </div>
+                    <div class="confirm-actions">
+                        <a asp-action="Appointments" class="btn btn-outline-secondary btn-touch">Vazgeç</a>
+                        <form asp-action="Cancel" asp-route-id="@appointment.Id" method="post">
+                            <button type="submit" class="btn btn-danger btn-touch">Evet, iptal et</button>
+                        </form>
+                    </div>
+                }
+            </article>
+        }
+    </div>
+
+    @if (Model.Past.Count > 0)
+    {
+        <h2 class="list-title">Geçmiş ve sonuçlananlar</h2>
+        <div class="table-box">
+            <table class="table data-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Tarih</th>
+                        <th scope="col">Hizmet</th>
+                        <th scope="col" class="text-end">Süre</th>
+                        <th scope="col">Hekim / şube</th>
+                        <th scope="col" class="text-end">Ücret</th>
+                        <th scope="col">Durum</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var appointment in Model.Past)
+                    {
+                        var (statusText, statusClass) = Display.Status(appointment, Model.Now);
+                        <tr>
+                            <td>@Display.ShortDateTime(appointment.Period.Start)</td>
+                            <td>@appointment.ServiceNameAtBooking</td>
+                            <td class="text-end">@Display.Minutes(appointment.Duration)</td>
+                            <td>@appointment.Dentist.FullName · @appointment.Branch.Name</td>
+                            <td class="text-end">@Display.Price(appointment.PriceAtBooking)</td>
+                            <td>
+                                <span class="badge-status @statusClass">@statusText</span>
+                                @if (appointment.RejectionReason is { } reason)
+                                {
+                                    <div class="small muted">Gerekçe: @reason</div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <p class="hint">
+            Süre ve ücret randevunun alındığı andaki değerlerle gösteriliyor; tarife sonradan değişse de bu kayıtlar değişmiyor.
+        </p>
+    }
+}

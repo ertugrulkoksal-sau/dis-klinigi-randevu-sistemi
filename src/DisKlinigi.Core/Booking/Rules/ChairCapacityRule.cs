@@ -22,7 +22,8 @@ public sealed class ChairCapacityRule : IBookingRule
 
         return PeakOccupancy(busy, request.Period) < branch.ChairCount
             ? RuleResult.Passed
-            : RuleResult.Violated($"Şubedeki {branch.ChairCount} ünitin hepsi bu saat aralığının bir kısmında dolu ({branch.Name}).");
+            : RuleResult.Violated(
+                $"{TurkishNames.Locative(branch.Name)}ki {branch.ChairCount} ünitin hepsi bu saat aralığının bir kısmında dolu.");
     }
 
     /// <summary>

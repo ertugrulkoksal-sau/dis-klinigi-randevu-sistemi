@@ -123,8 +123,9 @@ Personel e-postalarının hepsi `@disklinigi.test`, hastalarınki `@ornek.test` 
 (`.test` uzantısı denemeye ayrılmış, gerçek bir adrese e-posta gitmesi mümkün değil).
 
 Hasta hesabı giriş sayfasındaki "Hasta kaydı" formuyla da açılabiliyor. Personel hesapları
-klinik tarafından açılıyor (yönetici paneli, 14 Kasım). 11 Kasım itibarıyla ekranların içerikleri
-henüz yok; menüdeki sayfalar hangi gün kodlanacağını yazıyor ve sadece yetkili role açılıyor.
+klinik tarafından açılıyor (yönetici paneli, 14 Kasım). 12 Kasım itibarıyla hasta ekranları (randevu al,
+randevularım) çalışıyor; personel ve yönetici ekranlarında henüz hangi gün kodlanacakları yazıyor,
+sayfalar yine sadece yetkili role açılıyor.
 
 ### Teslim paketi
 
@@ -143,7 +144,7 @@ src/
   DisKlinigi.Web/      MVC arayüzü, EF Core veri erişimi, örnek veri
 tests/
   DisKlinigi.Tests/    Core için birim testleri; Data klasöründe SQLite üzerinde veri katmanı testleri,
-                       Web klasöründe uygulamanın kendisi üzerinden giriş ve yetki testleri
+                       Web klasöründe uygulamanın kendisi üzerinden giriş, yetki ve hasta ekranı testleri
 docs/
   tasarim.md           Alan modeli, iş kuralları, tasarım kararları ve alternatifleri
   arayuz-tasarimi.md   Onaylanan ekran tasarımları, onay durumu ve inceleme notları
@@ -166,11 +167,11 @@ Tablo proje ilerledikçe dolduruluyor; "Durum" sütunu o maddenin hangi gün tam
 | Doktor ve sağlık personeli kaydı | Soyut `User` sınıfından türeyen `Dentist`, `Assistant` (K14); bütün kullanıcılar tek tabloda (TPH), parolalar `PasswordHasher` ile özetli (K15, K37); personel aynı giriş ekranından giriş yapıyor, asistanın menüsünde bağlı olduğu şube görünüyor (`User.AssignedBranch`, K44) | Alan modeli ve testleri (7 Kas); veritabanı (10 Kas); giriş (11 Kas); ekran 14 Kas |
 | Doktorun uzmanlık alanı ve verdiği hizmetler | `Dentist.Specialty`, `Dentist.OfferService` / `Offers`, çalıştığı şubeler | Alan modeli ve testleri (7 Kas) |
 | Müsaitlik aralıkları; randevu sadece bu aralıklara | `Dentist.AddAvailability` (şube saatine sığma, kesişme kontrolü), `Dentist.IsAvailable` (K8, K24); randevuda `DentistAvailabilityRule`, boş saatler de sadece bu aralıklardan üretiliyor (K32); hekim bütün parçalarıyla `IDentistRepository` ile yükleniyor | Alan modeli (7 Kas); kural ve testleri (9 Kas); veritabanı (10 Kas) |
-| Personel ve hizmet seçerek randevu | Şube → bölüm → hizmet → hekim → saat akışı; boş saatler `AppointmentScheduler.GetFreeSlotsAsync` ile kayıttaki kuralların aynısından geçirilerek üretiliyor (K32) | Boş saat üretimi ve testleri (9 Kas); ekran 12 Kas |
+| Personel ve hizmet seçerek randevu | Şube → bölüm → hizmet → hekim → gün → saat akışı (`PatientController.Book`, `Schedule`); her seçim sonrakini daraltıyor, hekim listesi `Dentist.CanServe` ile (K47); boş saatler `AppointmentScheduler.GetFreeSlotsAsync` ile kayıttaki kuralların aynısından geçirilerek üretiliyor (K32); kaydederken saat dolmuşsa çiğnenen kuralların hepsi gösteriliyor | Boş saat üretimi ve testleri (9 Kas); ekranlar ve uygulama üzerinden testleri (12 Kas) |
 | Çakışma kontrolü | Strategy deseniyle sekiz `IBookingRule` sınıfı (geçmiş saat, hizmet, bölüm, çalışma saati, müsaitlik, hekim/hasta çakışması, ünit kapasitesi) + `AppointmentScheduler` (K12, K31, K33); ünit kapasitesinde en yüksek eş zamanlı randevu sayısı taranıyor; eş zamanlı istekler için kontrol ve kayıt tek işlemde, SQLite'ta `BEGIN IMMEDIATE` (K19) | Kurallar, planlayıcı ve testleri (9 Kas); veritabanı işlemi ve iki bağlantılı eş zamanlılık testleri (10 Kas) |
-| Randevu detaylarının kaydı | `Appointment`: hasta, hekim, şube, `TimeRange` ile başlangıç/bitiş; hizmet adı ve ücreti randevu anındaki haliyle kopyalanıyor (K9, K30); hasta notu ve alındığı an (K35); tabloda `Start`/`End` sütunları, durum metin olarak (K37, K38) | Alan modeli ve testleri (8 Kas); veritabanı ve testleri (10 Kas) |
-| Onay mekanizması | Hizmete göre ilk durum (K2); planlayıcı ile kaydedilen muayene "Onaylandı", tedavi "Onay bekliyor" olarak çıkıyor; State deseniyle Onay bekliyor → Onaylandı / Reddedildi, geçersiz geçiş hata veriyor (K13, K26, K28); onay yetkisi `User.CanApprove` (K27) | Alan modeli + 30 hücrelik geçiş tablosu testi (8 Kas); otomatik onay planlayıcıda (9 Kas); ekran 13 Kas |
-| Randevu iptali (hasta için 24 saat kuralı) | `Appointment.Cancel`, `User.CanCancel`; hasta 24 saatten fazla kala, personel her zaman (başlamadan önce) iptal eder (K4, K29) | Alan modeli ve sınır testleri (8 Kas); ekran 12–13 Kas |
+| Randevu detaylarının kaydı | `Appointment`: hasta, hekim, şube, `TimeRange` ile başlangıç/bitiş; hizmet adı ve ücreti randevu anındaki haliyle kopyalanıyor (K9, K30); hasta notu ve alındığı an (K35); tabloda `Start`/`End` sütunları, durum metin olarak (K37, K38). Randevularım ekranı süre ve ücreti randevudaki kopyadan gösteriyor | Alan modeli ve testleri (8 Kas); veritabanı ve testleri (10 Kas); hasta ekranı (12 Kas) |
+| Onay mekanizması | Hizmete göre ilk durum (K2); planlayıcı ile kaydedilen muayene "Onaylandı", tedavi "Onay bekliyor" olarak çıkıyor, hasta bunu randevu alırken özet kartında ve sonrasında mesajda görüyor; State deseniyle Onay bekliyor → Onaylandı / Reddedildi, geçersiz geçiş hata veriyor (K13, K26, K28); onay yetkisi `User.CanApprove` (K27) | Alan modeli + 30 hücrelik geçiş tablosu testi (8 Kas); otomatik onay planlayıcıda (9 Kas); ekran 13 Kas |
+| Randevu iptali (hasta için 24 saat kuralı) | `Appointment.Cancel`, `User.CanCancel`; hasta 24 saatten fazla kala, personel her zaman (başlamadan önce) iptal eder (K4, K29). `AppointmentService.CancelAsync` aynı metotla hastanın ve personelin iptalini yapıyor, ilgisiz kullanıcıya randevu "bulunamadı" (K46). Randevularım'da iptal önce onay soruyor, 24 saatten az kalan randevuda buton pasif ve nedeni yazıyor | Alan modeli ve sınır testleri (8 Kas); servis, Randevularım ekranı ve testleri (12 Kas); personel iptali 13 Kas |
 | Roller: Hasta, Doktor/Personel, Yönetici | `Patient`, `Dentist`, `Assistant`, `BranchManager`, `ChainAdministrator` (K14); randevu yetkileri her sınıfta ayrı (`CanApprove`, `CanCancel`). Giriş: çerez kimlik doğrulaması, parola `IPasswordHasher` ile doğrulanıyor, hasta kendi kaydını açıyor (`AccountService`, K15, K43). Sayfa erişimi rol politikalarıyla (`Policies`), varsayılan "giriş zorunlu"; kayda bağlı yetki alan sınıflarında (K41); çerez her istekte veritabanıyla karşılaştırılıyor (K42); role göre menü (`MainMenu`) | Sınıflar (7 Kas); randevu yetkileri (8 Kas); giriş, kayıt, rol politikaları ve 5 rol × 9 sayfa erişim testi (11 Kas) |
 
 README'nin son halinde (15 Kasım) UML sınıf ve sıra diyagramları, SOLID eşleme tablosu

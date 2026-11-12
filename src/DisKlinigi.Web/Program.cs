@@ -3,6 +3,7 @@ using System.Text.Encodings.Web;
 using System.Text.Unicode;
 using DisKlinigi.Core.Abstractions;
 using DisKlinigi.Core.Accounts;
+using DisKlinigi.Core.Appointments;
 using DisKlinigi.Core.Booking;
 using DisKlinigi.Web.Data;
 using DisKlinigi.Web.Data.Repositories;
@@ -34,6 +35,7 @@ builder.Services.AddScoped<IBranchRepository, EfBranchRepository>();
 builder.Services.AddScoped<IDentistRepository, EfDentistRepository>();
 builder.Services.AddScoped<IAppointmentRepository, EfAppointmentRepository>();
 builder.Services.AddScoped<IUserRepository, EfUserRepository>();
+builder.Services.AddScoped<ICatalogRepository, EfCatalogRepository>();
 
 // Randevu kuralları durumsuz olduğu için tek örnek yeterli. Kayıt sırası, çiğnenen
 // kuralların kullanıcıya gösterildiği sıra (tasarım.md bölüm 3); planlayıcı listeyi
@@ -41,6 +43,7 @@ builder.Services.AddScoped<IUserRepository, EfUserRepository>();
 foreach (var rule in BookingRules.CreateDefault())
     builder.Services.AddSingleton(rule);
 builder.Services.AddScoped<AppointmentScheduler>();
+builder.Services.AddScoped<AppointmentService>();
 
 builder.Services.AddSingleton<IPasswordHasher, AspNetPasswordHasher>();
 builder.Services.AddScoped<AccountService>();
