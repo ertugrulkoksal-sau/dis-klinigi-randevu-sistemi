@@ -586,6 +586,53 @@ alıp formu gönderiyor. Rol × sayfa tablosu (5 rol, 9 sayfa) testte elle yazı
 menü ya da bir politika yanlış rol listesi alırsa test düşüyor. Oturum doğrulayıcıyı ve statik
 dosyaların girişsiz açılmasını geçici olarak kaldırdığımda ilgili iki testin düştüğünü gördüm.
 
+### Hasta ekranlarını kodlarken verilen kararlar (12 Kasım)
+
+**K46 – Var olan randevu üzerindeki işlemler `AppointmentService`'te; ilgisiz kullanıcıya "bulunamadı".**
+İptal için controller'a kural yazmak yerine Core'a küçük bir uygulama servisi ekledim. Servis sadece
+sırayı kuruyor: randevuyu yükle, kullanıcının randevuyla ilgisi var mı bak (`Appointment.Involves`),
+işi randevunun `Cancel` metoduna bırak, kaydet. 24 saat kuralı `Patient.CanCancel`'da, "saati gelmiş
+randevu iptal edilmez" durum sınıfında kalıyor; servis bunları tekrar yazmıyor. Bu yüzden aynı
+`CancelAsync` yarın asistanın iptali için de çalışacak, aradaki fark kullanıcı nesnesinin sınıfında.
+Alan sınıfının fırlattığı `DomainException` servis sınırında sonuca (`AppointmentActionResult`)
+çevriliyor, çünkü "24 saatten az kaldı" kullanıcı için olağan bir cevap.
+"İlgisi var" = randevunun hastası ya da randevuyu onaylayabilecek personel (`User.CanApprove`'un çok
+biçimli cevabı; rol kontrolü yok). İlgisiz biri başka bir randevunun numarasını denerse "yetkiniz yok"
+yerine "bulunamadı" görüyor; böylece hata mesajından randevunun var olduğu ya da durumu anlaşılmıyor.
+Yöneticiler de bu yüzden randevuya ulaşamıyor; bu K34 ile aynı yönde (13 Kasım'da `CanCancel` de `false`
+olacak). *Alternatif:* iptali doğrudan controller'da yapmak. Daha kısa olurdu ama yarın personel
+panelinde aynı yükle-kontrol et-kaydet sırası ikinci kez yazılacaktı.
+`IAppointmentRepository`'ye bu iş için üç metot eklendi (Id ile getir, hastanın randevuları, kaydet);
+arayüz hâlâ amaca özel (K17), her metot bir ekranın ya da servisin ihtiyacı.
+
+**K47 – Randevu alma adımları sorgu parametreleriyle; hekim listesi `Dentist.CanServe` ile daraltılıyor.**
+Arayüz tasarımında kararlaştırıldığı gibi akış JavaScript'siz: her seçim bir bağlantı ve sayfa
+`?branchId=…&departmentId=…&serviceId=…&dentistId=…` ile yeniden açılıyor. Adres elle bozulursa (şubede
+olmayan bölüm, hizmeti vermeyen hekim) o seçim yok sayılıyor; asıl koruma kayıtta kuralların yeniden
+çalışması. Hekim listesindeki soru ("bu hekim bu şubede bu hizmeti verebilir mi?") hekim sınıfında:
+şubede çalışıyor, hizmeti veriyor, şube hizmetin bölümünü barındırıyor ve o şubede en az bir müsaitlik
+aralığı var. Son şartı ekledim, çünkü şubeye atanmış ama aralığı girilmemiş bir hekim listede görünse
+hiç boş saati çıkmazdı. Bu, kayıttaki kuralların saatten bağımsız kısmı; saate bağlı kurallar (çakışma,
+ünit) boş saat listesinde çalışıyor.
+Gün listesi bugünden başlayan 14 günlük pencerelerle ilerliyor ("Sonraki 2 hafta"); ileri tarih için bir
+sınır koymadım, çünkü alan modelinde böyle bir kural yok. Gün seçilmemişse pencerenin ilk çalışma günü
+seçili geliyor. Kayıt kurallara takılırsa sayfa aynı gün açık, seçili saat kaldırılmış ve hastanın notu
+korunmuş olarak, çiğnenen kuralların hepsiyle geri geliyor (tasarım 2b'deki hata örneği).
+*Alternatif:* adımları sunucu tarafında oturumda (session) tutmak. Adres paylaşılabilir ve geri tuşu
+doğal çalıştığı için sorgu parametrelerini seçtim.
+
+**K48 – Kural mesajları ekrandaki metinle aynı; şube adına Türkçe ek bir yardımcıyla getiriliyor.**
+Tasarım incelemesinde (9 Kasım) iki mesajın ekrandaki yazımı belirlenmişti: "Dt. Ayşe Kaya bu saat
+aralığında başka bir randevuda." ve "Serdivan Şubesi'ndeki 4 ünitin hepsi bu saat aralığının bir
+kısmında dolu." Hekim mesajı artık diğer randevunun saatini ve şubesini söylemiyor; mesajı başka bir
+hasta görüyor ve zaten listeden yeni saat seçecek. "Şubesi'ndeki" için `TurkishNames.Locative` yazdım:
+ünlü uyumu son ünlüye, d/t son harfin sert olup olmamasına göre seçiliyor, iyelik ekiyle biten adlarda
+(Şubesi, Merkezi) kaynaştırma "n"si geliyor. Bilinen sınırı "Adapazarı" gibi iyelik eki "s"siz biten
+adlar; şube adları "… Şubesi" biçiminde olduğu için şimdilik yeterli ve testte hangi adlarla denendiği
+yazıyor. Aynı yardımcı randevu ekranındaki "Serdivan Şubesi'ndeki bölümler" başlığında da kullanılıyor.
+*Alternatif:* eki hiç kullanmamak ("4 ünitin hepsi dolu (Serdivan Şubesi)"). Daha basit ama tasarımda
+onaylanan metinden ayrılıyordu.
+
 ## 5. İlk sınıf taslağı
 
 Bu taslak 7–9 Kasım'da kodlanacak; README'deki son diyagram koddan çıkarılacak.
