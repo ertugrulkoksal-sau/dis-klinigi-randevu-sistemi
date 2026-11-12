@@ -21,14 +21,54 @@ internal sealed class InMemoryAppointmentRepository : IAppointmentRepository
     private readonly List<Appointment> _saved = [];
     private readonly List<Appointment> _staged = [];
 
+    private int _lastId;
+
     public InMemoryAppointmentRepository(params Appointment[] existing)
     {
-        _saved.AddRange(existing);
+        foreach (var appointment in existing)
+            Store(appointment);
     }
 
     public IReadOnlyList<Appointment> Saved => _saved.AsReadOnly();
 
     public int CommitCount { get; private set; }
+
+    /// <summary>İptal gibi durum değişikliklerinin kaç kez kaydedildiği.</summary>
+    public int SaveCount { get; private set; }
+
+    public Task<Appointment?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        lock (_saved)
+            return Task.FromResult(_saved.FirstOrDefault(a => a.Id == id));
+    }
+
+    public Task<IReadOnlyList<Appointment>> GetForPatientAsync(Patient patient, CancellationToken cancellationToken = default)
+    {
+        lock (_saved)
+        {
+            IReadOnlyList<Appointment> result = _saved
+                .Where(a => a.Patient.IsSameAs(patient))
+                .OrderBy(a => a.Period.Start)
+                .ToList();
+            return Task.FromResult(result);
+        }
+    }
+
+    public Task SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        SaveCount++;
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Kaydedilen randevuya veritabanının yapacağı gibi sıradaki Id'yi verir. Id'nin ayarlayıcısı
+    /// alan sınıfında korumalı (Id'yi veritabanı veriyor); testte bunu yansıma ile taklit ediyorum.
+    /// </summary>
+    private void Store(Appointment appointment)
+    {
+        typeof(Entity).GetProperty(nameof(Entity.Id))!.SetValue(appointment, ++_lastId);
+        _saved.Add(appointment);
+    }
 
     public async Task<IReadOnlyList<Appointment>> GetActiveOnDateAsync(
         Dentist dentist, Patient patient, Branch branch, DateOnly date, CancellationToken cancellationToken = default)
@@ -60,7 +100,10 @@ internal sealed class InMemoryAppointmentRepository : IAppointmentRepository
         public Task CommitAsync(CancellationToken cancellationToken = default)
         {
             lock (owner._saved)
-                owner._saved.AddRange(owner._staged);
+            {
+                foreach (var appointment in owner._staged)
+                    owner.Store(appointment);
+            }
             owner._staged.Clear();
             owner.CommitCount++;
             return Task.CompletedTask;

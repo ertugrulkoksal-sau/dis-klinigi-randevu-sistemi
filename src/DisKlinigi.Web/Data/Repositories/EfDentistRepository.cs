@@ -1,4 +1,5 @@
 using DisKlinigi.Core.Abstractions;
+using DisKlinigi.Core.Domain;
 using DisKlinigi.Core.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,12 +21,24 @@ public class EfDentistRepository : IDentistRepository
     /// çarpılırdı (hizmet × şube × aralık); <c>AsSplitQuery</c> her koleksiyonu ayrı sorguyla getiriyor.
     /// </remarks>
     public Task<Dentist?> GetByIdAsync(int id, CancellationToken cancellationToken = default) =>
-        _db.Dentists
+        WithParts(_db.Dentists).FirstOrDefaultAsync(d => d.Id == id, cancellationToken);
+
+    public async Task<IReadOnlyList<Dentist>> GetWorkingAtAsync(Branch branch, CancellationToken cancellationToken = default)
+    {
+        var branchId = branch.Id;
+        return await WithParts(_db.Dentists)
+            .Where(d => d.Branches.Any(b => b.Id == branchId))
+            .OrderBy(d => d.FullName)
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <summary>Hekim her zaman bütün parçalarıyla yükleniyor (bkz. <see cref="IDentistRepository.GetByIdAsync"/>).</summary>
+    private static IQueryable<Dentist> WithParts(IQueryable<Dentist> query) =>
+        query
             .Include(d => d.Specialty)
             .Include(d => d.Services).ThenInclude(s => s.Department)
             .Include(d => d.Branches).ThenInclude(b => b.WorkingHours)
             .Include(d => d.Branches).ThenInclude(b => b.Departments)
             .Include(d => d.Availability).ThenInclude(a => a.Branch)
-            .AsSplitQuery()
-            .FirstOrDefaultAsync(d => d.Id == id, cancellationToken);
+            .AsSplitQuery();
 }

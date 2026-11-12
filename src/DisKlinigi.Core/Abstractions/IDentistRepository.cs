@@ -1,3 +1,4 @@
+using DisKlinigi.Core.Domain;
 using DisKlinigi.Core.Domain.Users;
 
 namespace DisKlinigi.Core.Abstractions;
@@ -15,4 +16,10 @@ public interface IDentistRepository
     /// Bu yüzden yarım yükleme seçeneği bilerek yok.
     /// </remarks>
     Task<Dentist?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Verilen şubeye atanmış hekimler, <see cref="GetByIdAsync"/> gibi bütün parçalarıyla ve ada göre sıralı.
+    /// Randevu ekranı bunları <see cref="Dentist.CanServe"/> ile seçilen hizmete göre daraltıyor.
+    /// </summary>
+    Task<IReadOnlyList<Dentist>> GetWorkingAtAsync(Branch branch, CancellationToken cancellationToken = default);
 }
