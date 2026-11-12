@@ -1,0 +1,150 @@
+@model BookingScheduleViewModel
+@using DisKlinigi.Core.Domain
+@using DisKlinigi.Core.Domain.Appointments
+@using System.Globalization
+@{
+    ViewData["Title"] = "Tarih ve saat seçin";
+    ViewData["MenuAction"] = "Book"; // üst menüde "Randevu al" seçili kalsın
+    var branch = Model.Branch;
+    var service = Model.Service;
+    var dentist = Model.Dentist;
+    string Param(DateOnly d) => d.ToString(Display.DateParameterFormat, CultureInfo.InvariantCulture);
+    string TimeParam(DateTime t) => t.ToString(Display.TimeParameterFormat, CultureInfo.InvariantCulture);
+}
+
+<div class="title-row">
+    <h1 class="page-title">Tarih ve saat seçin</h1>
+    <a asp-action="Book" asp-route-branchId="@branch.Id" asp-route-departmentId="@service.Department.Id"
+       asp-route-serviceId="@service.Id" asp-route-dentistId="@dentist.Id">← Seçimlere dön</a>
+</div>
+
+<div class="schedule-layout">
+    <div class="stack">
+        <section class="panel" aria-labelledby="gunBaslik">
+            <h2 id="gunBaslik" class="section-title">5. Gün <span class="section-note">— hekimin bu şubede çalıştığı günler</span></h2>
+            <div class="day-row">
+                @if (Model.HasPreviousPage)
+                {
+                    <a class="day-tile day-more" asp-action="Schedule" asp-route-branchId="@branch.Id" asp-route-serviceId="@service.Id"
+                       asp-route-dentistId="@dentist.Id" asp-route-from="@Param(Model.From.AddDays(-BookingScheduleViewModel.DaysPerPage))">← Önceki 2 hafta</a>
+                }
+                @foreach (var day in Model.Days)
+                {
+                    var selected = day == Model.Date;
+                    <a class="day-tile @(selected ? "selected" : null)" aria-current="@(selected ? "date" : null)"
+                       asp-action="Schedule" asp-route-branchId="@branch.Id" asp-route-serviceId="@service.Id"
+                       asp-route-dentistId="@dentist.Id" asp-route-from="@Param(Model.From)" asp-route-date="@Param(day)">
+                        <span class="small">@TurkishNames.Day(day.DayOfWeek)</span>
+                        <strong>@Display.ShortDate(day)</strong>
+                    </a>
+                }
+                @if (Model.Days.Count == 0)
+                {
+                    <span class="muted">Bu iki haftada hekimin bu şubede çalıştığı gün yok.</span>
+                }
+                <a class="day-tile day-more" asp-action="Schedule" asp-route-branchId="@branch.Id" asp-route-serviceId="@service.Id"
+                   asp-route-dentistId="@dentist.Id" asp-route-from="@Param(Model.From.AddDays(BookingScheduleViewModel.DaysPerPage))">Sonraki 2 hafta →</a>
+            </div>
+        </section>
+
+        @if (Model.Date is { } date)
+        {
+            <section class="panel emphasis" aria-labelledby="saatBaslik">
+                <h2 id="saatBaslik" class="section-title">
+                    Boş saatler <span class="section-note">— @Display.DayAndMonth(date), @((int)service.Duration.TotalMinutes) dakikalık randevu</span>
+                </h2>
+                @if (Model.Slots.Count == 0)
+                {
+                    <div class="empty-note">Bu gün için boş saat kalmadı. Yukarıdan başka bir gün seçin.</div>
+                }
+                else
+                {
+                    <div class="slot-grid">
+                        @foreach (var slot in Model.Slots)
+                        {
+                            var selected = slot == Model.Selected;
+                            <a class="slot @(selected ? "selected" : null)" aria-current="@(selected ? "true" : null)"
+                               asp-action="Schedule" asp-route-branchId="@branch.Id" asp-route-serviceId="@service.Id"
+                               asp-route-dentistId="@dentist.Id" asp-route-from="@Param(Model.From)" asp-route-date="@Param(date)"
+                               asp-route-start="@TimeParam(slot.Start)">@slot.Start.ToString("HH:mm")</a>
+                        }
+                    </div>
+                }
+                <p class="hint">
+                    Saatler 15 dakikada bir başlıyor. Hekimin, sizin ya da şubedeki ünitlerin dolu olduğu saatler
+                    listede gösterilmiyor.
+                </p>
+            </section>
+        }
+
+        @if (Model.Violations.Count > 0)
+        {
+            <section class="error-box" role="alert" aria-labelledby="hataBaslik">
+                <h2 id="hataBaslik" class="error-title">Randevu oluşturulamadı</h2>
+                <p>Seçtiğiniz saat kaydedilirken kurallar tekrar kontrol edildi ve şunlar tutmadı:</p>
+                <ul>
+                    @foreach (var violation in Model.Violations)
+                    {
+                        <li>@violation</li>
+                    }
+                </ul>
+                <p class="mb-0">Lütfen listeden başka bir saat seçin.</p>
+            </section>
+        }
+    </div>
+
+    <aside class="panel summary-card" aria-labelledby="ozetBaslik">
+        <h2 id="ozetBaslik" class="section-title">6. Özet ve onay</h2>
+        <dl class="summary-list">
+            <dt>Şube</dt><dd>@branch.Name</dd>
+            <dt>Bölüm</dt><dd>@service.Department.Name</dd>
+            <dt>Hizmet</dt><dd>@service.Name</dd>
+            <dt>Hekim</dt><dd>@dentist.FullName</dd>
+            <dt>Tarih</dt><dd>@(Model.Date is { } d ? Display.LongDate(d) : "—")</dd>
+            <dt>Saat</dt><dd>@(Model.Selected is { } s ? $"{s.ToTimeString()} ({Display.Minutes(s.Duration)})" : "Listeden bir saat seçin")</dd>
+            <dt>Ücret</dt><dd class="price">@Display.Price(service.Price)</dd>
+        </dl>
+
+        @if (service.RequiresApproval)
+        {
+            <div class="approval-note">
+                Bu hizmet <strong>onay gerektiriyor</strong>. Randevunuz "Onay bekliyor" durumunda oluşturulur; hekim ya da
+                şube asistanı onaylayınca kesinleşir. Onay beklerken bu saat başkasına verilmez.
+            </div>
+        }
+        else
+        {
+            <div class="approval-note approval-auto">
+                Bu hizmet <strong>otomatik onaylanır</strong>; randevunuz oluşturulduğu anda kesinleşir.
+            </div>
+        }
+
+        <form asp-action="Schedule" method="post" class="stack">
+            @* Form, BookingForm'a öneksiz bağlanıyor; alan adları bu yüzden elle yazıldı. *@
+            <input type="hidden" name="BranchId" value="@Model.Form.BranchId" />
+            <input type="hidden" name="ServiceId" value="@Model.Form.ServiceId" />
+            <input type="hidden" name="DentistId" value="@Model.Form.DentistId" />
+            <input type="hidden" name="Date" value="@(Model.Form.Date is { } fd ? Param(fd) : "")" />
+            <input type="hidden" name="Start" value="@(Model.Form.Start?.ToString(Display.TimeParameterFormat, CultureInfo.InvariantCulture))" />
+            @Html.ValidationMessage("Date", new { @class = "field-error" })
+            @Html.ValidationMessage("Start", new { @class = "field-error" })
+            <div class="field">
+                <label for="Note" class="form-label">Hekime not <span class="optional">(isteğe bağlı)</span></label>
+                <textarea id="Note" name="Note" class="form-control note-input" rows="3"
+                          maxlength="@Appointment.MaxPatientNoteLength">@Model.Form.Note</textarea>
+                @Html.ValidationMessage("Note", new { @class = "field-error" })
+            </div>
+            @if (Model.Selected is not null)
+            {
+                <button type="submit" class="btn btn-primary btn-touch">Randevuyu oluştur</button>
+            }
+            else
+            {
+                <button type="button" class="btn btn-primary btn-touch" aria-disabled="true" disabled>Randevuyu oluştur</button>
+            }
+        </form>
+        <p class="hint">
+            Randevuya 24 saatten fazla varken Randevularım sayfasından iptal edebilirsiniz. Daha geç iptaller için şubeyi arayın.
+        </p>
+    </aside>
+</div>

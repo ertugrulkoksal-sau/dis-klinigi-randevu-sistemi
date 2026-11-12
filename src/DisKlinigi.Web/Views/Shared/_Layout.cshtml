@@ -8,7 +8,8 @@
         ? TurkishNames.Role(current) + (branchName is null ? "" : $", {branchName}")
         : null;
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
-    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+    // Bir akışın sonraki sayfaları (ör. randevu alırken tarih/saat) menüde ilk sayfasını seçili gösteriyor.
+    var currentAction = ViewData["MenuAction"] as string ?? ViewContext.RouteData.Values["action"]?.ToString();
 }
 <!DOCTYPE html>
 <html lang="tr">
@@ -57,7 +58,17 @@
     <main role="main" class="page">
         @if (TempData["Status"] is string status)
         {
-            <div role="status" class="status-message">@status</div>
+            <div role="status" class="status-message">
+                @if (TempData["StatusTitle"] is string statusTitle)
+                {
+                    <strong>@statusTitle</strong>
+                }
+                @status
+            </div>
+        }
+        @if (TempData["Error"] is string error)
+        {
+            <div role="alert" class="status-message status-error">@error</div>
         }
         @RenderBody()
     </main>
