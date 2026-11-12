@@ -135,7 +135,7 @@ public class EfAppointmentRepositoryTests : IAsyncLifetime
                 new BookingRequest(clinic.Ali, clinic.Ayse, clinic.Examination, clinic.Serdivan, At(10, 15)));
 
             Assert.False(result.Succeeded);
-            Assert.Contains(result.Violations, m => m.Contains("dolu"));
+            Assert.Contains(result.Violations, m => m.Contains("başka bir randevuda"));
 
             // Aynı bağlamda sonradan yapılan bir kayıt da reddedilen randevuyu yazmamalı.
             await context.SaveChangesAsync();
@@ -196,7 +196,7 @@ public class EfAppointmentRepositoryTests : IAsyncLifetime
             var result = await secondBooking;
 
             Assert.False(result.Succeeded);
-            Assert.Single(result.Violations, m => m.Contains("Dt. Ayşe Kaya bu saatte dolu"));
+            Assert.Single(result.Violations, m => m.Contains("Dt. Ayşe Kaya bu saat aralığında başka bir randevuda"));
         }
 
         await using var check = _db.CreateContext();

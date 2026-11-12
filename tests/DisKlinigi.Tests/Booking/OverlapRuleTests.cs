@@ -39,7 +39,7 @@ public class OverlapRuleTests
         var result = Dentist(existing);
 
         Assert.True(result.IsViolated);
-        Assert.Equal("Dt. Ayşe Kaya bu saatte dolu (10:30–11:00, Serdivan Şubesi).", result.Message);
+        Assert.Equal("Dt. Ayşe Kaya bu saat aralığında başka bir randevuda.", result.Message);
     }
 
     [Fact]
@@ -83,8 +83,8 @@ public class OverlapRuleTests
 
         var result = Dentist(elsewhere);
 
-        Assert.True(result.IsViolated);
-        Assert.Contains("Kadıköy Şubesi", result.Message);
+        // Mesaj diğer randevunun şubesini söylemiyor; hasta için önemli olan hekimin dolu olması.
+        Assert.Equal("Dt. Ayşe Kaya bu saat aralığında başka bir randevuda.", result.Message);
     }
 
     [Fact]

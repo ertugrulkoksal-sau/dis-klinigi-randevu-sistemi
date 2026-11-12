@@ -44,7 +44,7 @@ public class ChairCapacityRuleTests
         var result = Check(first, second);
 
         Assert.True(result.IsViolated);
-        Assert.Equal("Şubedeki 2 ünitin hepsi bu saat aralığının bir kısmında dolu (Serdivan Şubesi).", result.Message);
+        Assert.Equal("Serdivan Şubesi'ndeki 2 ünitin hepsi bu saat aralığının bir kısmında dolu.", result.Message);
     }
 
     [Fact]

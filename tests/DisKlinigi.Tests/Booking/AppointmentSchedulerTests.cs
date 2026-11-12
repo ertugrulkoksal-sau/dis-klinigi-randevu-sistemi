@@ -109,7 +109,7 @@ public class AppointmentSchedulerTests
             _clinic.Request(_clinic.Zeynep, _clinic.Ayse, _clinic.Examination, _clinic.Serdivan, At(10, 30)));
 
         Assert.False(second.Succeeded);
-        Assert.Equal(["Dt. Ayşe Kaya bu saatte dolu (10:00–11:00, Serdivan Şubesi)."], second.Violations);
+        Assert.Equal(["Dt. Ayşe Kaya bu saat aralığında başka bir randevuda."], second.Violations);
     }
 
     [Fact]
@@ -140,7 +140,7 @@ public class AppointmentSchedulerTests
 
         Assert.Single(results, r => r.Succeeded);
         var loser = Assert.Single(results, r => !r.Succeeded);
-        Assert.Contains("bu saatte dolu", Assert.Single(loser.Violations));
+        Assert.Contains("bu saat aralığında başka bir randevuda", Assert.Single(loser.Violations));
         Assert.Single(repository.Saved);
     }
 
