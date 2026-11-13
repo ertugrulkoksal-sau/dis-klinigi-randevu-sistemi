@@ -87,7 +87,7 @@ public sealed class AppointmentService
     /// <summary>
     /// Randevuyu gerekçesiyle reddeder. Gerekçe burada zorunlu, çünkü hastaya "Randevularım"da gösteriliyor
     /// ve hasta neden reddedildiğini bilmeden aynı randevuyu tekrar alabilir. Alan sınıfında isteğe bağlı
-    /// kaldı: gerekçe randevunun tutarlılığıyla ilgili değil, hastaya nasıl haber verildiğiyle ilgili (K50).
+    /// kaldı: gerekçe randevunun tutarlılığıyla ilgili değil, hastaya nasıl haber verildiğiyle ilgili (K51).
     /// </summary>
     public Task<AppointmentActionResult> RejectAsync(User by, int appointmentId, string? reason, CancellationToken cancellationToken = default) =>
         RunAsync(by, appointmentId, (appointment, _) =>

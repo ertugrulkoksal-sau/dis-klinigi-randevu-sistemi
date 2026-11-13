@@ -29,7 +29,7 @@ public sealed record AvailabilityChangeResult(bool Succeeded, bool NotFound, str
 /// hekim sınıfında, <see cref="Dentist.AddAvailability"/> içinde (K24); bu servis onları tekrar yazmıyor.
 /// Silmenin kuralı ise burada: ileri tarihte aktif randevusu olan aralık silinemiyor. Bu kural hekim
 /// sınıfında olamazdı, çünkü hekim nesnesi randevularını taşımıyor; randevular ayrı bir repository'den
-/// geliyor (K51). Aralık silinseydi o randevular "hekim müsait değil" kuralını çiğneyen kayıtlar olarak
+/// geliyor (K52). Aralık silinseydi o randevular "hekim müsait değil" kuralını çiğneyen kayıtlar olarak
 /// kalırdı.
 /// </remarks>
 public sealed class AvailabilityService

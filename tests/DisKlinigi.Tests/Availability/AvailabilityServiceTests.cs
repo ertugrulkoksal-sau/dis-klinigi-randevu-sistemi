@@ -10,7 +10,7 @@ namespace DisKlinigi.Tests.Availability;
 /// <summary>
 /// Hekimin müsaitlik aralıkları (ekran 4c). Ekleme kuralları hekim sınıfında (K24) ve orada ayrıca
 /// test ediliyor; burada servisin onları ekrana doğru taşıdığı ve silmedeki yeni kural sınanıyor:
-/// ileri tarihte aktif randevusu olan aralık silinemez (K51). Saat 8 Kasım 09:00, randevular 10 Kasım Salı.
+/// ileri tarihte aktif randevusu olan aralık silinemez (K52). Saat 8 Kasım 09:00, randevular 10 Kasım Salı.
 /// </summary>
 public class AvailabilityServiceTests
 {

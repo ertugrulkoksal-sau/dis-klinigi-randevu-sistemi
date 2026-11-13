@@ -85,11 +85,12 @@ genişlikte masaüstü görünümü.
 |---|---|
 | 11 Kas | Ekran 1 (giriş ve hasta kaydı), ortak sayfa düzeni (role göre üst menü, kullanıcı satırı, çıkış), "yetki yok" sayfası. Renkler `site.css`'te değişken olarak; Bootstrap'in renkleri bunlarla değiştirildi. Diğer ekranların yerinde şimdilik "bu ekran X günü kodlanacak" yazan sayfa var (K44). |
 | 12 Kas | Ekran 2a (şube, bölüm, hizmet, hekim; adım göstergesi, "Onay gerekir" rozeti, hekim yok boş durumu), ekran 2b (gün, boş saatler, özet kartı, hekime not, boş gün ve "kaydederken saat dolmuşsa" durumu), ekran 3 (yaklaşan randevular, iptal onay adımı, 24 saat kala pasif buton ve nedeni, geçmiş tablosu, ret gerekçesi, bütün durum rozetleri, boş durum). Ortak düzene sayfa üstü hata mesajı eklendi. Tasarımdaki kesikli "örnek" kutuları uygulamada sadece o durum gerçekten oluşunca görünüyor. |
+| 13 Kas | Ekran 4a (günlük takvim: randevular ve boş aralıklar, "şu an" çizgisi, önceki/sonraki gün ve "Bugün", duruma göre Onayla / Reddet… / Tamamlandı ve Gelmedi olarak işaretle / İptal et…, günün özeti; asistanda hekim seçici), ekran 4b (onay kuyruğu: hasta notu ve alınma zamanı, "Saati geçti" rozetli ve sadece "Reddet…" olan kart, ret gerekçesi formu, asistanda hekim filtresi, boş durum), ekran 4c (aralık tablosu, şubenin o günkü saati, ileri tarihte randevusu olan aralıkta pasif "Sil" ve nedeni, silmeden önce onay, aralık ekleme formu ve kurala takılınca alan sınıfının mesajı). Üst menüde onay kuyruğunun yanında bekleyen sayısı. |
 
 Giriş ekranı tasarımındaki "Prototip gezintisi" bağlantıları sadece tasarımda ekranlar arasında
 gezinmek için olduğundan uygulamaya alınmadı.
 
-Tasarımdan bilerek ayrıldığım noktalar (12 Kasım):
+Tasarımdan bilerek ayrıldığım noktalar (12 ve 13 Kasım):
 
 | Ekran | Tasarımda | Uygulamada | Neden |
 |---|---|---|---|
@@ -100,6 +101,12 @@ Tasarımdan bilerek ayrıldığım noktalar (12 Kasım):
 | 2b | "Sonraki 2 hafta →" | Ayrıca "← Önceki 2 hafta" (ilk pencerede yok) | İleri gidince geri dönmenin tek yolu tarayıcının geri tuşu oluyordu. |
 | 3 | Geçmiş tablosunda şube kısa adıyla ("Serdivan") | Şubenin tam adı | 2a'daki ile aynı neden. |
 | 3 | "Saati geçti" rozeti sadece onay kuyruğunda | Hastanın geçmiş tablosunda da (onaylanmadan saati gelen randevu) | K28'deki durum hastaya da görünmeli; yoksa "Onay bekliyor" yazan geçmiş bir randevu kafa karıştırırdı. |
+| 4a | Alt başlıkta "bugün sadece Serdivan Şubesi'nde, 09:00–13:00" | "Serdivan Şubesi'nde 09:00–13:00" (birden fazla aralık varsa virgülle) | "Sadece" ve "bugün" kelimeleri günün durumuna göre ayrı cümleler gerektiriyordu; aralıkların listesi aynı bilgiyi veriyor. |
+| 4a, 4b | Hekim seçici / filtresi sadece açılır liste | Açılır liste + "Göster" butonu | Sayfalar JavaScript'siz çalışıyor ("Ortak kararlar"); seçim değişince formu gönderecek bir şey yok. |
+| 4b | "7 Kas 09:24'te alındı" | "alınma: 7 Kas 09:24" | Saate gelen ek ("'te", "'da") saatin okunuşuna bağlı; şube adlarındaki ek yardımcısı (K48) sayıları okuyamıyor. |
+| 4b | Hekimin kuyruğunda da sadece hekim adı | Hekimin kuyruğunda şube adı da yazıyor | Hekim birden fazla şubede çalışabiliyor; asistanın kuyruğu tek şube olduğu için orada yazılmıyor. |
+| 4c | Hata "Aralık, Serdivan Şubesi'nin Cumartesi çalışma saatine (09:00–14:00) sığmıyor." | "10:00–16:00 aralığı, Serdivan Şubesi Cumartesi çalışma saatine (09:00–14:00) sığmıyor." | Mesaj alan sınıfından (`Dentist.AddAvailability`, 7 Kasım) olduğu gibi geliyor; ilgi eki için ikinci bir dil kuralı yazmadım. Hangi aralığın reddedildiği de görünüyor. |
+| 4c | Silinemeyen aralıkta "10 Kas'ta 2 randevu var" | Randevular farklı günlerdeyse "3 randevu var; ilki 10 Kas'ta" | Tasarımdaki örnekte randevular tek gündeydi; birden fazla gün için bir biçim gerekiyordu. |
 
 ## Ortak kararlar
 
@@ -169,5 +176,5 @@ ekranındaki tabloyla aynı bilgiyi veren haftalık görünüm kaldırıldı.
 |---|---|
 | 10 Kas | ✓ Yapıldı. `Appointment`'a hasta notu (en fazla 500 karakter) ve oluşturulma zamanı (K35). `Dentist` hata mesajlarındaki "Serdivan Şubesi şubesinde" tekrarı düzeltildi; şube adı artık kural mesajlarındaki gibi parantez içinde yazıyor ("… bu şubede çalışmıyor (Serdivan Şubesi)"). |
 | 12 Kas | ✓ Yapıldı. Kural mesajları ekrandaki metinle aynı: "Dt. Ayşe Kaya bu saat aralığında başka bir randevuda." ve "Serdivan Şubesi'ndeki 4 ünitin hepsi bu saat aralığının bir kısmında dolu." Şube adına ek `TurkishNames.Locative` ile getiriliyor (K48). |
-| 13 Kas | İleri tarihte aktif randevusu olan müsaitlik aralığı silinemeyecek (servis katmanında; `Dentist.RemoveAvailability` şu an koşulsuz). `BranchManager.CanCancel` ve `ChainAdministrator.CanCancel` `false` olacak, testleri güncellenecek (K34). |
+| 13 Kas | ✓ Yapıldı. İleri tarihte aktif randevusu olan müsaitlik aralığı silinemiyor; kural `AvailabilityService.RemoveAsync`'te (K52). `BranchManager.CanCancel` ve `ChainAdministrator.CanCancel` artık `false`, yetki tablosu testleri güncellendi (K34). |
 | 14 Kas | Hekim kaydı ve ortak bilgileri sadece zincir yöneticisi; şube yöneticisi atama/çıkarma ve asistan hesabı. Şube saati daraltılırken dışarıda kalan müsaitlik kontrolü (K24). |

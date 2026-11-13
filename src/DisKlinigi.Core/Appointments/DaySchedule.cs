@@ -12,7 +12,7 @@ public sealed record DayScheduleEntry(TimeRange Period, Appointment? Appointment
 
 /// <summary>
 /// Hekimin bir günü (ekran 4a): o günkü müsaitlik aralıkları, randevular ve aralıkların içinde kalan
-/// boş parçalar, saate göre sıralı; üstüne günün özeti (randevu sayısı, onay bekleyen, boş süre).
+/// boş parçalar, saate göre sıralı; üstüne günün özeti (randevu sayısı, onay bekleyen, boş süre) (K53).
 /// </summary>
 /// <remarks>
 /// Takvimde reddedilen ve iptal edilen randevular yok, çünkü saati bırakmışlar (K5); o saat boş görünüyor.

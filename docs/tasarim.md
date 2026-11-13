@@ -633,9 +633,72 @@ yazıyor. Aynı yardımcı randevu ekranındaki "Serdivan Şubesi'ndeki bölüml
 *Alternatif:* eki hiç kullanmamak ("4 ünitin hepsi dolu (Serdivan Şubesi)"). Daha basit ama tasarımda
 onaylanan metinden ayrılıyordu.
 
+### Personel panelini kodlarken verilen kararlar (13 Kasım)
+
+**K49 – Kimin neyi gördüğü ayrıca yazılmadı; onay kuyruğu ve takvim `CanApprove` ile süzülüyor.**
+Onay kuyruğu "onay bekleyen ve bu kullanıcının onaylayabileceği randevular", hekimin takvimi de "o günkü
+randevulardan bakan kişinin işlem yapabildikleri". Hekim kendi randevularını (her şubede), asistan sadece
+kendi şubesininkileri görüyor; çünkü `User.CanApprove` böyle cevaplıyor. Controller'da ya da sorguda
+"rol asistansa şubeye göre süz" diye ikinci bir kural yok; menüdeki kuyruk sayısı da aynı listeden
+sayılıyor, bu yüzden tasarım incelemesinde bulunan "hekimin menüsündeki sayı göremeyeceği randevuları
+sayıyor" hatası artık oluşamıyor. Hekim ile asistanın ekranları arasındaki tek fark asistanın hekim seçicisi;
+bu yetki değil, ekranın hangi hekimle açılacağı. *Bedeli:* repository zincirdeki bütün bekleyen
+randevuları getiriyor, süzme bellekte. Bekleyen randevu sadece onay gerektiren tedavilerde oluşuyor ve
+kısa sürede onaylanıyor ya da reddediliyor; bir zincirde bu sayı onlarla ifade edilir.
+*Alternatif:* repository'ye "şubenin bekleyenleri" ve "hekimin bekleyenleri" diye iki sorgu yazmak.
+Daha az veri okunurdu ama kural (kim neyi onaylar) hem kullanıcı sınıflarında hem sorgu seçiminde, iki
+yerde yazılmış olurdu. Sayılar büyürse sorgu daraltılır, `CanApprove` süzgeci yine güvenlik ağı olarak kalır.
+
+**K50 – Ekrandaki butonlar `Appointment.ActionsFor` ile; durumun izni ve kişinin yetkisi kesişiyor.**
+K27'de "bir butonun görünmesi için iki cevabın da evet olması gerekecek" demiştim. Her durum sınıfı
+verilen anda hangi işlemlere izin verdiğini söylüyor (`ActionsAt`: bekleyen randevu başlamadan onay, ret,
+iptal; saati geçince sadece ret; onaylı randevu başlamadan iptal, başlayınca tamamlandı/gelmedi). Randevu
+bunu kullanıcının `CanApprove` / `CanCancel` cevabıyla birleştiriyor. Bu listeyle işlem metotlarının
+kendisi aynı koşulları ayrı ayrı yazıyor; birinin değişip ötekinin unutulması ekranda "basınca hata
+veren buton" demek. Bu yüzden `AppointmentActionsTests` her durum, üç an (önce, başlama anı, sonra) ve
+beş işlem için "izin var diyorsa işlem başarılı, yok diyorsa hata" eşleşmesini kontrol ediyor; onaylı
+durumdaki "gelmedi" iznini geçici olarak sildiğimde bu testin düştüğünü gördüm.
+*Alternatif:* işlemi bir kopyada deneyip hata alınıp alınmadığına bakmak. Kod tekrarı olmazdı ama butonları
+çizmek için her randevuda beş kez istisna fırlatmak hem yavaş hem okunaksız olurdu.
+Takvimde bekleyen randevuda "İptal et…" yerine sadece "Reddet…" çıkıyor (ekran tasarımı 4a): ikisi de
+saati bırakıyor ama ret gerekçeyle hastaya gidiyor. Bu bir ekran seçimi; `ActionsFor` iptali yine "mümkün" diyor.
+
+**K51 – Ret gerekçesi ekranda ve serviste zorunlu, alan sınıfında isteğe bağlı; en fazla 500 karakter.**
+Gerekçe "Randevularım"da hastaya gösteriliyor; hasta neden reddedildiğini bilmezse aynı randevuyu tekrar
+alabilir. Bu bir iletişim kuralı, randevunun tutarlılığıyla ilgili değil; bu yüzden zorunluluğu
+`AppointmentService.RejectAsync` kontrol ediyor ve form alanı `required`. `Appointment.Reject`'te gerekçe
+isteğe bağlı kaldı (örnek veri ve durum testleri gerekçesiz ret de yapıyor); ama uzunluk sınırı orada,
+çünkü sütunun boyu (500) veritabanının tutarlılığı. Sınır aşılırsa geçişten önce hata veriyor, randevu
+değişmiyor.
+
+**K52 – İleri tarihte aktif randevusu olan müsaitlik aralığı silinemiyor; kural `AvailabilityService`'te.**
+Aralık silinseydi o randevular "hekim bu saatte müsait değil" kuralını çiğneyen kayıtlar olarak kalırdı.
+Kural hekim sınıfında olamazdı, çünkü hekim nesnesi randevularını taşımıyor (randevular ayrı repository,
+K17); "Koda yansıyacak işler" tablosunda da servis katmanı denmişti. "İleri tarih" = aktif ve henüz
+başlamamış (`Appointment.IsUpcoming`); geçmiş ya da iptal edilmiş randevular silmeyi engellemiyor, çünkü aralık
+haftalık bir kalıp ve silinmesi geçmişi değiştirmiyor. Randevunun aralığa düşüp düşmediği randevu kuralının
+kullandığı `AvailabilityWindow.Covers` ile soruluyor; aynı gün başka şubedeki randevu bu aralığı tutmuyor.
+Ekranda silinemeyen aralığın butonu pasif ve yanında "17 Kas'ta 1 randevu var" yazıyor. Aralık eklemenin
+kuralları (K24) zaten `Dentist.AddAvailability`'de; servis onları tekrar yazmıyor, sadece şubenin hekimin
+şubelerinden biri olduğunu kontrol edip alan sınıfının mesajını ekrana taşıyor. Silinen aralık hekimin
+listesinden çıkınca EF Core onu sahipsiz kayıt olarak siliyor; bu SQLite üzerinde ayrıca test edildi.
+*Alternatif:* aralığı silmek yerine "pasif" işaretlemek ve var olan randevulara dokunmamak. Ek bir durum
+alanı ve her müsaitlik sorgusunda filtre demek; ödevin kapsamında gerek görmedim.
+
+**K53 – Takvimde iptal ve ret yok, tamamlandı ve gelmedi var; boşluklar sadece müsaitlik aralığının içinde.**
+`DaySchedule` günün randevularını ve hekimin o günkü aralıklarının içinde kalan boş parçaları saate göre
+diziyor. İptal edilen ve reddedilen randevular saati bıraktığı için (K5) takvimde boş görünüyor; tamamlanan
+ve gelinmeyen randevular ise o saatte koltuğu gerçekten tutmuş, onlar kalıyor. Aralığın dışına düşen bir
+randevu (aralık sonradan değiştiyse) listeden kaybolmuyor. Hekim kendi takviminde o günkü bütün
+aralıklarını, asistan sadece kendi şubesindeki aralığı görüyor (`User.AssignedBranch`). Boş parçaların
+hesabı ve özet (randevu, onay bekleyen, boş süre) Core'da ve veritabanı olmadan test ediliyor; ekran sadece
+çiziyor. Ret, iptal ve silme, hasta tarafındaki iptal gibi önce sayfada bir onay ya da gerekçe adımı açıyor
+(`?reject=`, `?cancel=`, `?delete=`); JavaScript gerekmiyor.
+
 ## 5. İlk sınıf taslağı
 
-Bu taslak 7–9 Kasım'da kodlanacak; README'deki son diyagram koddan çıkarılacak.
+Bu taslak 6 Kasım'da, kod yazılmadan önce çizildi ve 7–9 Kasım'da kodlandı. Koddan çıkarılan güncel
+sınıf ve sıra diyagramları README'de (13 Kasım); bu taslak ilk düşünceyi göstermek için olduğu gibi bırakıldı.
 
 ```mermaid
 classDiagram

@@ -142,7 +142,7 @@ public class Appointment : Entity
     /// çıkıyor: onaylı randevuda "Onayla" yok, "Tamamlandı" sadece saati gelmiş onaylı randevuda var.
     /// </summary>
     /// <remarks>
-    /// İki sorunun kesişimi (K27): durum bu işleme izin veriyor mu (State deseni) ve kişinin bu
+    /// İki sorunun kesişimi (K27, K50): durum bu işleme izin veriyor mu (State deseni) ve kişinin bu
     /// randevuyla yetkisi var mı (<see cref="User.CanApprove"/>, <see cref="User.CanCancel"/>; çok
     /// biçimli cevaplar). Onay, ret ve sonuç işlemenin yetkisi aynı (<c>CanApprove</c>). Burada da
     /// rol kontrolü yok; asistanla hekimin farkı kullanıcı sınıflarında.
