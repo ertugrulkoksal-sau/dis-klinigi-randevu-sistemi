@@ -57,7 +57,7 @@ internal sealed class BookingClinic
     public Patient Can { get; } = new("Can Öztürk", "can@ornek.com", Hash);
     public Patient Deniz { get; } = new("Deniz Koç", "deniz@ornek.com", Hash);
 
-    /// <summary>İptal için yetkili biri; zincir yöneticisi her randevuyu iptal edebiliyor.</summary>
+    /// <summary>Veri testlerinde tek tabloya (TPH) yönetici satırı da yazılsın diye; randevu iptal edemiyor (K34).</summary>
     public ChainAdministrator Admin { get; } = new("Selin Aydın", "selin@ornek.com", Hash);
 
     public BookingClinic()

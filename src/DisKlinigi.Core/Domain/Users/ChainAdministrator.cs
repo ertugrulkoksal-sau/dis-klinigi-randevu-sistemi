@@ -27,6 +27,6 @@ public class ChainAdministrator : User
     /// <summary>Şube yöneticisiyle aynı gerekçe: onay tıbbi bir karar, yöneticinin işi değil (K27).</summary>
     public override bool CanApprove(Appointment appointment) => false;
 
-    /// <summary>Her şubeyi yönetebildiği için her şubedeki randevuyu iptal edebilir.</summary>
-    public override bool CanCancel(Appointment appointment, DateTime now) => CanManageBranch(appointment.Branch);
+    /// <summary>Şube yöneticisiyle aynı: yöneticiler randevuya dokunmuyor (K34).</summary>
+    public override bool CanCancel(Appointment appointment, DateTime now) => false;
 }

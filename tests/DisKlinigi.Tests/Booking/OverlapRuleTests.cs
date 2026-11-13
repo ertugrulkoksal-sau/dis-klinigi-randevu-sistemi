@@ -109,7 +109,7 @@ public class OverlapRuleTests
     public void Iptal_edilen_randevu_saati_birakir()
     {
         var cancelled = Existing(_clinic.Zeynep, _clinic.Ayse, _clinic.CanalTreatment, _clinic.Serdivan, At(10));
-        cancelled.Cancel(_clinic.Admin, _clinic.Now);
+        cancelled.Cancel(_clinic.Ayse, _clinic.Now);   // randevunun hekimi
 
         Assert.False(Dentist(cancelled).IsViolated);
     }

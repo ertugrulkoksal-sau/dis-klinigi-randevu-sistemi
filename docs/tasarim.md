@@ -436,7 +436,7 @@ yaptığı değişiklik hekimin Kadıköy'deki çalışmasını da etkiliyordu, 
 hesabı açıyor. Yöneticilerin şube randevularını iptal etmesi için ayrıca bir ekran gerekecekti;
 kapsamı büyütmemek için bu yetkiyi kaldırdım. Randevu işlemleri hekim ve asistanda kalıyor.
 Kodda `BranchManager.CanCancel` ve `ChainAdministrator.CanCancel` personel paneli gününde
-(13 Kasım) `false` olacak. *Alternatif:* yöneticiye salt okunur bir "şube randevuları" listesi
+(13 Kasım) `false` yapıldı; iptal yetki tablosu testinde iki yönetici satırı da artık "hayır". *Alternatif:* yöneticiye salt okunur bir "şube randevuları" listesi
 ve iptal yetkisi vermek; gerçek bir klinikte faydalı ama ödevin rol tanımı bunu gerektirmiyor.
 
 **K35 – Randevuda hasta notu ve oluşturulma zamanı tutuluyor.**
@@ -600,7 +600,7 @@ Alan sınıfının fırlattığı `DomainException` servis sınırında sonuca (
 biçimli cevabı; rol kontrolü yok). İlgisiz biri başka bir randevunun numarasını denerse "yetkiniz yok"
 yerine "bulunamadı" görüyor; böylece hata mesajından randevunun var olduğu ya da durumu anlaşılmıyor.
 Yöneticiler de bu yüzden randevuya ulaşamıyor; bu K34 ile aynı yönde (13 Kasım'da `CanCancel` de `false`
-olacak). *Alternatif:* iptali doğrudan controller'da yapmak. Daha kısa olurdu ama yarın personel
+oldu). *Alternatif:* iptali doğrudan controller'da yapmak. Daha kısa olurdu ama yarın personel
 panelinde aynı yükle-kontrol et-kaydet sırası ikinci kez yazılacaktı.
 `IAppointmentRepository`'ye bu iş için üç metot eklendi (Id ile getir, hastanın randevuları, kaydet);
 arayüz hâlâ amaca özel (K17), her metot bir ekranın ya da servisin ihtiyacı.
