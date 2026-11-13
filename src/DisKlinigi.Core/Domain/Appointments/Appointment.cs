@@ -29,6 +29,9 @@ public class Appointment : Entity
     /// <summary>Hastanın hekime yazabileceği notun en fazla uzunluğu (K35).</summary>
     public const int MaxPatientNoteLength = 500;
 
+    /// <summary>Ret gerekçesinin en fazla uzunluğu; veritabanındaki sütun da bu kadar.</summary>
+    public const int MaxRejectionReasonLength = 500;
+
     public Patient Patient { get; private set; } = null!;
     public Dentist Dentist { get; private set; } = null!;
     public Branch Branch { get; private set; } = null!;
@@ -167,8 +170,12 @@ public class Appointment : Entity
     /// </summary>
     public void Reject(User by, string? reason = null)
     {
+        var trimmed = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim();
+        if (trimmed?.Length > MaxRejectionReasonLength)
+            throw new DomainException($"Ret gerekçesi en fazla {MaxRejectionReasonLength} karakter olabilir.");
+
         State.Reject(this, Require(by));
-        RejectionReason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim();
+        RejectionReason = trimmed;
     }
 
     public void Cancel(User by, DateTime now) => State.Cancel(this, Require(by), now);

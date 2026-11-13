@@ -31,6 +31,21 @@ public interface IAppointmentRepository
     /// <summary>Hastanın bütün randevuları (her durumda), başlangıç saatine göre sıralı; hekim ve şubeyle.</summary>
     Task<IReadOnlyList<Appointment>> GetForPatientAsync(Patient patient, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Zincirdeki bütün onay bekleyen randevular (saati geçmişler dahil), başlangıca göre sıralı;
+    /// hasta, hekim ve şubeyle. Onay kuyruğu bunları kullanıcının <c>CanApprove</c> cevabıyla süzüyor (K49).
+    /// </summary>
+    Task<IReadOnlyList<Appointment>> GetPendingAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Hekimin o günle kesişen bütün randevuları (her durumda, her şubede), başlangıca göre sıralı; günlük takvim için.</summary>
+    Task<IReadOnlyList<Appointment>> GetForDentistOnDateAsync(Dentist dentist, DateOnly date, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Hekimin verilen andan sonra başlayan aktif randevuları (her şubede), başlangıca göre sıralı.
+    /// Müsaitlik aralığı silinmeden önce bu aralıkta ileri tarihli randevu var mı diye bakılıyor.
+    /// </summary>
+    Task<IReadOnlyList<Appointment>> GetUpcomingForDentistAsync(Dentist dentist, DateTime from, CancellationToken cancellationToken = default);
+
     /// <summary>Yüklenmiş randevularda yapılan durum değişikliklerini (iptal, onay...) kaydeder.</summary>
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 

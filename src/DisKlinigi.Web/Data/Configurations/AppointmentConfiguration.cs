@@ -26,7 +26,7 @@ public class AppointmentConfiguration : IEntityTypeConfiguration<Appointment>
 
         b.Property(x => x.ServiceNameAtBooking).HasMaxLength(100).IsRequired();
         b.Property(x => x.PriceAtBooking).HasPrecision(10, 2);
-        b.Property(x => x.RejectionReason).HasMaxLength(500);
+        b.Property(x => x.RejectionReason).HasMaxLength(Appointment.MaxRejectionReasonLength);
         b.Property(x => x.PatientNote).HasMaxLength(Appointment.MaxPatientNoteLength);
 
         // Randevu geçmişi kayıt olarak değerli (alınan ücret, gelmeyen hasta). Hasta, hekim,

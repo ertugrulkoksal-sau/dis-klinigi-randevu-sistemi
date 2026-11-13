@@ -54,6 +54,27 @@ internal sealed class InMemoryAppointmentRepository : IAppointmentRepository
         }
     }
 
+    public Task<IReadOnlyList<Appointment>> GetPendingAsync(CancellationToken cancellationToken = default) =>
+        Query(a => a.Status == AppointmentStatus.PendingApproval);
+
+    public Task<IReadOnlyList<Appointment>> GetForDentistOnDateAsync(Dentist dentist, DateOnly date, CancellationToken cancellationToken = default)
+    {
+        var day = new TimeRange(date.ToDateTime(TimeOnly.MinValue), date.AddDays(1).ToDateTime(TimeOnly.MinValue));
+        return Query(a => a.Dentist.IsSameAs(dentist) && a.Period.Overlaps(day));
+    }
+
+    public Task<IReadOnlyList<Appointment>> GetUpcomingForDentistAsync(Dentist dentist, DateTime from, CancellationToken cancellationToken = default) =>
+        Query(a => a.Dentist.IsSameAs(dentist) && a.IsActive && a.Period.Start > from);
+
+    private Task<IReadOnlyList<Appointment>> Query(Func<Appointment, bool> filter)
+    {
+        lock (_saved)
+        {
+            IReadOnlyList<Appointment> result = _saved.Where(filter).OrderBy(a => a.Period.Start).ToList();
+            return Task.FromResult(result);
+        }
+    }
+
     public Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         SaveCount++;

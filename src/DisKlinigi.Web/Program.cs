@@ -4,6 +4,7 @@ using System.Text.Unicode;
 using DisKlinigi.Core.Abstractions;
 using DisKlinigi.Core.Accounts;
 using DisKlinigi.Core.Appointments;
+using DisKlinigi.Core.Availability;
 using DisKlinigi.Core.Booking;
 using DisKlinigi.Web.Data;
 using DisKlinigi.Web.Data.Repositories;
@@ -44,6 +45,7 @@ foreach (var rule in BookingRules.CreateDefault())
     builder.Services.AddSingleton(rule);
 builder.Services.AddScoped<AppointmentScheduler>();
 builder.Services.AddScoped<AppointmentService>();
+builder.Services.AddScoped<AvailabilityService>();
 
 builder.Services.AddSingleton<IPasswordHasher, AspNetPasswordHasher>();
 builder.Services.AddScoped<AccountService>();
