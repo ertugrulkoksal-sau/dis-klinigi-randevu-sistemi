@@ -10,6 +10,10 @@ internal abstract class ActiveState : AppointmentState
 {
     public override bool IsActive => true;
 
+    /// <summary>Başlamamış aktif randevu iptal edilebilir; alt sınıflar kendi işlemlerini ekliyor.</summary>
+    internal override AppointmentActions ActionsAt(Appointment appointment, DateTime now) =>
+        appointment.HasStarted(now) ? AppointmentActions.None : AppointmentActions.Cancel;
+
     /// <summary>
     /// İptal sadece randevu başlamadan yapılabiliyor. Saati gelmiş randevu iptal
     /// edilmiyor; onaylıysa tamamlandı/gelmedi, onay bekliyorsa ret ile kapatılıyor (K28).

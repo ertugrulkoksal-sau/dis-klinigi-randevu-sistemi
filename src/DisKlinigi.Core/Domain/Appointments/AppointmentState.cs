@@ -33,6 +33,19 @@ public abstract class AppointmentState
     /// </summary>
     public abstract bool IsActive { get; }
 
+    /// <summary>
+    /// Bu durum verilen anda hangi işlemlere izin veriyor? Kimin yaptığına bakmıyor; o soru
+    /// kullanıcı sınıflarında (<see cref="Appointment.ActionsFor"/> ikisini birleştiriyor).
+    /// Varsayılan cevap "hiçbiri"; aşağıdaki işlem metotları gibi sadece izin veren durum eziyor.
+    /// </summary>
+    /// <remarks>
+    /// Bu metot ekranda butonların çıkması için, işlem metotları ise işlemin kendisi için var;
+    /// ikisi aynı koşulları ayrı ayrı yazıyor. Birbirinden kopmasınlar diye
+    /// <c>AppointmentActionsTests</c> her durum, her an ve her işlem için "izin var diyorsa işlem
+    /// başarılı, yok diyorsa hata" eşleşmesini kontrol ediyor.
+    /// </remarks>
+    internal virtual AppointmentActions ActionsAt(Appointment appointment, DateTime now) => AppointmentActions.None;
+
     internal virtual void Approve(Appointment appointment, User by, DateTime now) =>
         throw NotAllowed("onaylanamaz");
 

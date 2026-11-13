@@ -16,6 +16,12 @@ internal sealed class PendingState : ActiveState
 
     public override AppointmentStatus Status => AppointmentStatus.PendingApproval;
 
+    /// <summary>Başlamadan: onayla, reddet, iptal et. Saati geldiyse sadece reddet (K28).</summary>
+    internal override AppointmentActions ActionsAt(Appointment appointment, DateTime now) =>
+        appointment.HasStarted(now)
+            ? AppointmentActions.Reject
+            : base.ActionsAt(appointment, now) | AppointmentActions.Approve | AppointmentActions.Reject;
+
     /// <summary>
     /// Saati geçmiş bir randevuyu onaylamak anlamsız (hasta gelmiş ya da gelmemiş
     /// olabilir); böyle bir randevu ret ile kapatılıyor (K28).

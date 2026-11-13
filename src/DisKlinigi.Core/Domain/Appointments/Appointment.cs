@@ -134,6 +134,30 @@ public class Appointment : Entity
     public bool Involves(User user) =>
         user is not null && (Patient.IsSameAs(user) || user.CanApprove(this));
 
+    /// <summary>
+    /// Bu kullanıcı bu randevuda şu an hangi işlemleri yapabilir? Ekrandaki butonlar buna göre
+    /// çıkıyor: onaylı randevuda "Onayla" yok, "Tamamlandı" sadece saati gelmiş onaylı randevuda var.
+    /// </summary>
+    /// <remarks>
+    /// İki sorunun kesişimi (K27): durum bu işleme izin veriyor mu (State deseni) ve kişinin bu
+    /// randevuyla yetkisi var mı (<see cref="User.CanApprove"/>, <see cref="User.CanCancel"/>; çok
+    /// biçimli cevaplar). Onay, ret ve sonuç işlemenin yetkisi aynı (<c>CanApprove</c>). Burada da
+    /// rol kontrolü yok; asistanla hekimin farkı kullanıcı sınıflarında.
+    /// </remarks>
+    public AppointmentActions ActionsFor(User user, DateTime now)
+    {
+        ArgumentNullException.ThrowIfNull(user);
+
+        var permitted = AppointmentActions.None;
+        if (user.CanApprove(this))
+            permitted |= AppointmentActions.Approve | AppointmentActions.Reject
+                | AppointmentActions.Complete | AppointmentActions.MarkNoShow;
+        if (user.CanCancel(this, now))
+            permitted |= AppointmentActions.Cancel;
+
+        return State.ActionsAt(this, now) & permitted;
+    }
+
     public void Approve(User by, DateTime now) => State.Approve(this, Require(by), now);
 
     /// <summary>
