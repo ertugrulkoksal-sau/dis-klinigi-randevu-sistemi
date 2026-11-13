@@ -787,6 +787,253 @@ body {
   margin: 0 0 12px;
 }
 
+/* ---- Personel paneli (ekran 4a, 4b, 4c) ---- */
+
+.page-subtitle {
+  margin: 6px 0 0;
+  color: var(--dk-muted);
+}
+
+.menu-badge {
+  display: inline-block;
+  min-width: 22px;
+  margin-left: 4px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #B45309;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.day-nav, .inline-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.inline-filter .form-select {
+  min-width: 220px;
+}
+
+.form-select {
+  background-color: var(--dk-surface);
+  height: 44px;
+  border-color: var(--dk-input-border);
+  border-radius: 8px;
+}
+
+.calendar-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .calendar-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.timeline {
+  border: 1px solid var(--dk-border);
+  border-radius: 12px;
+  background: var(--dk-surface);
+  overflow: hidden;
+}
+
+.timeline-row {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--dk-border);
+}
+
+.timeline-row:last-child {
+  border-bottom: 0;
+}
+
+.timeline-free {
+  display: flex;
+  gap: 20px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  color: var(--dk-muted);
+  background: repeating-linear-gradient(135deg, #FAFBFC, #FAFBFC 12px, #F3F5F7 12px, #F3F5F7 24px);
+}
+
+.timeline-time {
+  flex: 0 0 110px;
+  min-width: 110px;
+}
+
+.timeline-appointment.is-pending {
+  background: #FFF8EE;
+}
+
+.timeline-main {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px 20px;
+}
+
+.timeline-what {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.timeline-actions, .queue-actions, .outcome-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.timeline-actions form, .queue-actions form, .outcome-actions form {
+  margin: 0;
+}
+
+.outcome-actions {
+  margin-top: 12px;
+}
+
+.timeline-empty {
+  padding: 20px;
+  color: var(--dk-muted);
+}
+
+/* "Şu an" çizgisi: saat solda, çizgi satırın geri kalanında. */
+.now-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 20px;
+  color: var(--dk-danger);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.now-line::after {
+  content: "";
+  flex: 1;
+  border-top: 2px solid var(--dk-danger);
+}
+
+@media (max-width: 760px) {
+  .timeline-main {
+    grid-template-columns: 1fr;
+  }
+}
+
+.panel-compact {
+  padding: 20px;
+  gap: 12px;
+}
+
+.summary-list.summary-wide {
+  grid-template-columns: 1fr auto;
+}
+
+.btn-outline-danger {
+  --bs-btn-color: var(--dk-danger);
+  --bs-btn-border-color: var(--dk-input-border);
+  --bs-btn-bg: var(--dk-surface);
+  --bs-btn-hover-bg: #FDF1EF;
+  --bs-btn-hover-color: var(--dk-danger);
+  --bs-btn-hover-border-color: #E7A9A1;
+  --bs-btn-active-bg: #FDF1EF;
+  --bs-btn-active-color: var(--dk-danger);
+}
+
+.queue-card {
+  padding: 20px;
+  border: 1px solid var(--dk-border);
+  border-radius: 12px;
+  background: var(--dk-surface);
+}
+
+.queue-card.confirming {
+  border: 2px solid #F2C4BE;
+}
+
+.queue-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+}
+
+.queue-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+}
+
+.queue-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 17px;
+}
+
+.reject-form {
+  margin-top: 16px;
+}
+
+.panel-flush {
+  padding: 24px 0;
+}
+
+.panel-pad {
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+.table-plain {
+  border: 0;
+  border-radius: 0;
+  border-top: 1px solid var(--dk-border);
+  border-bottom: 1px solid var(--dk-border);
+}
+
+.data-table td {
+  vertical-align: middle;
+}
+
+/* "Sil" sütunundaki neden yazısı alt satıra geçebilsin; tablo dar ekranda gereksiz yere kaymasın. */
+.data-table td.actions-cell {
+  white-space: normal;
+  min-width: 140px;
+}
+
+.btn-small {
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.inline-confirm {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin: 0;
+}
+
+.form-error {
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #FDF1EF;
+  color: #8A1C12;
+  font-size: 14px;
+}
+
 /* ---- Alt bilgi ---- */
 
 .site-footer {

@@ -37,6 +37,17 @@ public static class Display
     public static string DayAndMonth(DateOnly date) =>
         $"{date.Day} {Turkish.DateTimeFormat.GetMonthName(date.Month)} {TurkishNames.Day(date.DayOfWeek)}";
 
+    /// <summary>"10 Kasım 2026 Salı, 11:00–12:00" (onay kuyruğundaki randevu kartlarında).</summary>
+    public static string LongDateTime(TimeRange period) =>
+        $"{period.Start.Day} {Turkish.DateTimeFormat.GetMonthName(period.Start.Month)} {period.Start.Year} " +
+        $"{TurkishNames.Day(period.Start.DayOfWeek)}, {period.ToTimeString()}";
+
+    /// <summary>"7 Kas 09:24" (randevunun alındığı an).</summary>
+    public static string ShortMoment(DateTime moment) => $"{ShortDate(DateOnly.FromDateTime(moment))} {moment:HH:mm}";
+
+    /// <summary>Haftanın günleri Pazartesi'den başlayarak (formlardaki gün listesi).</summary>
+    public static IReadOnlyList<DayOfWeek> Week => WeekOrder;
+
     /// <summary>"10 Kas".</summary>
     public static string ShortDate(DateOnly date) =>
         $"{date.Day} {Turkish.DateTimeFormat.GetAbbreviatedMonthName(date.Month)}";

@@ -1,0 +1,112 @@
+@model QueueViewModel
+@using DisKlinigi.Core.Domain
+@using DisKlinigi.Core.Domain.Appointments
+@{
+    ViewData["Title"] = "Onay kuyruğu";
+    var branch = Model.Viewer.AssignedBranch;
+    var here = Url.Action("Queue", new { dentistId = Model.DentistId });
+}
+
+<div class="title-row">
+    <div>
+        <h1 class="page-title">Onay kuyruğu</h1>
+        <p class="page-subtitle">
+            @(branch is null
+                ? "Size ait onay bekleyen tedavi randevuları, en yakın tarih önce."
+                : $"{TurkishNames.Locative(branch.Name)} onay bekleyen tedavi randevuları, en yakın tarih önce.")
+        </p>
+    </div>
+    @if (Model.DentistChoices.Count > 0)
+    {
+        <form method="get" asp-action="Queue" class="inline-filter">
+            <div class="field">
+                <label for="dentistId" class="form-label">Hekim</label>
+                <div class="inline-filter">
+                    <select id="dentistId" name="dentistId" class="form-select">
+                        <option value="">Tüm hekimler</option>
+                        @foreach (var choice in Model.DentistChoices)
+                        {
+                            <option value="@choice.Id" selected="@(choice.Id == Model.DentistId)">@choice.FullName</option>
+                        }
+                    </select>
+                    <button type="submit" class="btn btn-outline-secondary btn-touch">Göster</button>
+                </div>
+            </div>
+        </form>
+    }
+</div>
+
+@if (Model.Items.Count == 0)
+{
+    <div class="empty-note">Onay bekleyen randevu yok. Yeni tedavi randevuları alındıkça burada görünür.</div>
+}
+<div class="stack">
+    @foreach (var appointment in Model.Items)
+    {
+        var actions = Model.ActionsFor(appointment);
+        var overdue = appointment.IsOverdue(Model.Now);
+        var rejecting = appointment.Id == Model.RejectId && actions.HasFlag(AppointmentActions.Reject);
+        <article id="randevu-@appointment.Id" class="queue-card @(rejecting ? "confirming" : null)">
+            <div class="queue-main">
+                <div class="queue-text">
+                    <div class="queue-title">
+                        <strong>@appointment.Patient.FullName</strong>
+                        <span class="badge-status badge-pending">@TurkishNames.Status(appointment.Status)</span>
+                        @if (overdue)
+                        {
+                            <span class="badge-status badge-overdue">Saati geçti</span>
+                        }
+                    </div>
+                    <span>
+                        @appointment.ServiceNameAtBooking · @Display.Minutes(appointment.Duration) · @Display.Price(appointment.PriceAtBooking) · @appointment.Dentist.FullName
+                        @if (branch is null)
+                        {
+                            <text> · @appointment.Branch.Name</text>
+                        }
+                    </span>
+                    <strong>@Display.LongDateTime(appointment.Period)</strong>
+                    <span class="small muted">
+                        @if (overdue)
+                        {
+                            <text>Saati geçtiği için artık onaylanamaz; gerekçe yazılarak reddedilir.</text>
+                        }
+                        else if (appointment.PatientNote is { } note)
+                        {
+                            <text>Hasta notu: “@note”</text>
+                        }
+                        else
+                        {
+                            <text>Not yok</text>
+                        }
+                        · alınma: @Display.ShortMoment(appointment.CreatedAt)
+                    </span>
+                </div>
+                @if (!rejecting)
+                {
+                    <div class="queue-actions">
+                        @if (actions.HasFlag(AppointmentActions.Approve))
+                        {
+                            <form asp-action="Approve" asp-route-id="@appointment.Id" method="post">
+                                <input type="hidden" name="returnUrl" value="@here" />
+                                <button type="submit" class="btn btn-primary btn-touch">Onayla</button>
+                            </form>
+                        }
+                        @if (actions.HasFlag(AppointmentActions.Reject))
+                        {
+                            <a class="btn btn-outline-danger btn-touch" asp-action="Queue" asp-route-dentistId="@Model.DentistId"
+                               asp-route-reject="@appointment.Id" asp-fragment="randevu-@appointment.Id">Reddet…</a>
+                        }
+                    </div>
+                }
+            </div>
+            @if (rejecting)
+            {
+                <partial name="_RejectForm" model="(appointment.Id, here)" />
+            }
+        </article>
+    }
+</div>
+@if (Model.Items.Count > 0)
+{
+    <p class="hint mt-3">Onay bekleyen randevu da saati tutar; bu yüzden aynı saate ikinci bir bekleyen randevu düşmez. "Reddet…" gerekçe formunu açar.</p>
+}

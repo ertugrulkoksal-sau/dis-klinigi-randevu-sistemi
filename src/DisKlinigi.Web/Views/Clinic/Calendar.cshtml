@@ -1,0 +1,176 @@
+@model CalendarViewModel
+@using DisKlinigi.Core.Domain
+@using DisKlinigi.Core.Domain.Appointments
+@using System.Globalization
+@{
+    ViewData["Title"] = "Günlük takvim";
+    string Param(DateOnly d) => d.ToString(Display.DateParameterFormat, CultureInfo.InvariantCulture);
+    var dentistId = Model.DentistChoices.Count > 0 ? Model.Dentist?.Id : null;
+    var here = Url.Action("Calendar", new { date = Param(Model.Date), dentistId });
+    var nowShown = false;
+}
+
+<div class="title-row">
+    <div>
+        <h1 class="page-title">Günlük takvim</h1>
+        <p class="page-subtitle">
+            @Display.LongDate(Model.Date)
+            @if (Model.Day is { } summary)
+            {
+                @if (summary.Windows.Count == 0)
+                {
+                    <text> · bu gün müsaitlik aralığı yok</text>
+                }
+                else
+                {
+                    <text> · @string.Join(", ", summary.Windows.Select(w => $"{TurkishNames.Locative(w.Branch.Name)} {w.Hours}"))</text>
+                }
+            }
+        </p>
+    </div>
+    <div class="day-nav">
+        @if (Model.DentistChoices.Count > 0)
+        {
+            <form method="get" asp-action="Calendar" class="inline-filter">
+                <input type="hidden" name="date" value="@Param(Model.Date)" />
+                <label for="dentistId" class="visually-hidden">Hekim</label>
+                <select id="dentistId" name="dentistId" class="form-select">
+                    @foreach (var choice in Model.DentistChoices)
+                    {
+                        <option value="@choice.Id" selected="@(choice.Id == Model.Dentist?.Id)">@choice.FullName</option>
+                    }
+                </select>
+                <button type="submit" class="btn btn-outline-secondary btn-touch">Göster</button>
+            </form>
+        }
+        <a class="btn btn-outline-secondary btn-touch" aria-label="Önceki gün" asp-action="Calendar" asp-route-date="@Param(Model.Date.AddDays(-1))" asp-route-dentistId="@dentistId">‹</a>
+        <a class="btn btn-outline-secondary btn-touch" asp-action="Calendar" asp-route-dentistId="@dentistId">Bugün</a>
+        <a class="btn btn-outline-secondary btn-touch" aria-label="Sonraki gün" asp-action="Calendar" asp-route-date="@Param(Model.Date.AddDays(1))" asp-route-dentistId="@dentistId">›</a>
+    </div>
+</div>
+
+@if (Model.Dentist is null || Model.Day is null)
+{
+    <div class="empty-note">Şubenizde çalışan hekim yok; takvim gösterilemiyor.</div>
+}
+else
+{
+    var day = Model.Day;
+    <div class="calendar-layout">
+        <section class="timeline" aria-label="@Model.Dentist.FullName, @Display.LongDate(Model.Date)">
+            @if (day.Entries.Count == 0)
+            {
+                <div class="timeline-empty">Bu gün için randevu ya da müsaitlik aralığı yok.</div>
+            }
+            @foreach (var entry in day.Entries)
+            {
+                if (Model.IsToday && !nowShown && entry.Period.Start >= Model.Now)
+                {
+                    nowShown = true;
+                    <div class="now-line" aria-label="Şu an @Model.Now.ToString("HH:mm")"><span>@Model.Now.ToString("HH:mm")</span></div>
+                }
+
+                if (entry.Appointment is not { } appointment)
+                {
+                    <div class="timeline-row timeline-free">
+                        <span class="timeline-time">@entry.Period.ToTimeString()</span>
+                        <span>Boş</span>
+                    </div>
+                    continue;
+                }
+
+                var (statusText, statusClass) = Display.Status(appointment, Model.Now);
+                var actions = Model.ActionsFor(appointment);
+                var rejecting = appointment.Id == Model.RejectId && actions.HasFlag(AppointmentActions.Reject);
+                var cancelling = appointment.Id == Model.CancelId && actions.HasFlag(AppointmentActions.Cancel);
+                // Bekleyen randevuyu personel iptal etmek yerine gerekçeyle reddediyor (ekran tasarımı 4a).
+                var showCancel = actions.HasFlag(AppointmentActions.Cancel) && !actions.HasFlag(AppointmentActions.Reject);
+                <article id="randevu-@appointment.Id" class="timeline-row timeline-appointment @(appointment.Status == AppointmentStatus.PendingApproval ? "is-pending" : null)">
+                    <div class="timeline-main">
+                        <strong class="timeline-time">@entry.Period.ToTimeString()</strong>
+                        <div class="timeline-what">
+                            <strong>@appointment.Patient.FullName</strong>
+                            <span class="muted">
+                                @appointment.ServiceNameAtBooking · @Display.Price(appointment.PriceAtBooking) · @appointment.Branch.Name
+                                @if (appointment.PatientNote is { } note)
+                                {
+                                    <text> · “@note”</text>
+                                }
+                            </span>
+                        </div>
+                        <span class="badge-status @statusClass">@statusText</span>
+                        <div class="timeline-actions">
+                            @if (actions.HasFlag(AppointmentActions.Approve))
+                            {
+                                <form asp-action="Approve" asp-route-id="@appointment.Id" method="post">
+                                    <input type="hidden" name="returnUrl" value="@here" />
+                                    <button type="submit" class="btn btn-primary btn-touch">Onayla</button>
+                                </form>
+                            }
+                            @if (actions.HasFlag(AppointmentActions.Reject) && !rejecting)
+                            {
+                                <a class="btn btn-outline-danger btn-touch" asp-action="Calendar" asp-route-date="@Param(Model.Date)"
+                                   asp-route-dentistId="@dentistId" asp-route-reject="@appointment.Id" asp-fragment="randevu-@appointment.Id">Reddet…</a>
+                            }
+                            @if (showCancel && !cancelling)
+                            {
+                                <a class="btn btn-outline-danger btn-touch" asp-action="Calendar" asp-route-date="@Param(Model.Date)"
+                                   asp-route-dentistId="@dentistId" asp-route-cancel="@appointment.Id" asp-fragment="randevu-@appointment.Id">İptal et…</a>
+                            }
+                        </div>
+                    </div>
+                    @if (actions.HasFlag(AppointmentActions.Complete) || actions.HasFlag(AppointmentActions.MarkNoShow))
+                    {
+                        <div class="outcome-actions">
+                            <form asp-action="Complete" asp-route-id="@appointment.Id" method="post">
+                                <input type="hidden" name="returnUrl" value="@here" />
+                                <button type="submit" class="btn btn-outline-primary btn-touch">Tamamlandı olarak işaretle</button>
+                            </form>
+                            <form asp-action="NoShow" asp-route-id="@appointment.Id" method="post">
+                                <input type="hidden" name="returnUrl" value="@here" />
+                                <button type="submit" class="btn btn-outline-secondary btn-touch">Gelmedi olarak işaretle</button>
+                            </form>
+                        </div>
+                    }
+                    @if (rejecting)
+                    {
+                        <partial name="_RejectForm" model="(appointment.Id, here)" />
+                    }
+                    @if (cancelling)
+                    {
+                        <div class="confirm-box" role="alert">
+                            <strong>Bu randevuyu iptal etmek istiyor musunuz?</strong>
+                            <span>İptal geri alınamaz; saat başka hastalara açılır ve hasta randevusunu "İptal edildi" olarak görür.</span>
+                        </div>
+                        <div class="confirm-actions">
+                            <a class="btn btn-outline-secondary btn-touch" href="@here">Vazgeç</a>
+                            <form asp-action="Cancel" asp-route-id="@appointment.Id" method="post">
+                                <input type="hidden" name="returnUrl" value="@here" />
+                                <button type="submit" class="btn btn-danger btn-touch">Evet, iptal et</button>
+                            </form>
+                        </div>
+                    }
+                </article>
+            }
+            @if (Model.IsToday && !nowShown && day.Entries.Count > 0)
+            {
+                <div class="now-line" aria-label="Şu an @Model.Now.ToString("HH:mm")"><span>@Model.Now.ToString("HH:mm")</span></div>
+            }
+        </section>
+
+        <aside class="stack">
+            <section class="panel panel-compact" aria-labelledby="ozetBaslik">
+                <h2 id="ozetBaslik" class="section-title">Günün özeti</h2>
+                <dl class="summary-list summary-wide">
+                    <dt>Randevu</dt>
+                    <dd>@day.AppointmentCount</dd>
+                    <dt>Onay bekleyen</dt>
+                    <dd>@day.PendingCount</dd>
+                    <dt>Boş süre</dt>
+                    <dd>@((int)day.FreeTime.TotalMinutes) dk</dd>
+                </dl>
+            </section>
+            <p class="hint">"Reddet…" ve "İptal et…" geri alınamayan işlemler; önce gerekçe ya da onay soruluyor.</p>
+        </aside>
+    </div>
+}
