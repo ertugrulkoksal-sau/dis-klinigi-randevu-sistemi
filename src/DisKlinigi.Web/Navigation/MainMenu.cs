@@ -2,8 +2,8 @@ using DisKlinigi.Core.Domain.Users;
 
 namespace DisKlinigi.Web.Navigation;
 
-/// <summary>Üst menüde bir bağlantı.</summary>
-public sealed record MenuItem(string Text, string Controller, string Action);
+/// <summary>Üst menüde bir bağlantı. <paramref name="Badge"/> doluysa yanında o adlı bileşenin çizdiği sayı çıkıyor.</summary>
+public sealed record MenuItem(string Text, string Controller, string Action, string? Badge = null);
 
 /// <summary>
 /// Role göre üst menü (arayüz tasarımı, "Ortak kararlar"). Girişten sonra herkes kendi
@@ -27,13 +27,13 @@ public static class MainMenu
         UserRole.Dentist =>
         [
             new("Takvim", "Clinic", "Calendar"),
-            new("Onay kuyruğu", "Clinic", "Queue"),
+            new("Onay kuyruğu", "Clinic", "Queue", Badge: "QueueCount"),
             new("Müsaitlik", "Clinic", "Availability")
         ],
         UserRole.Assistant =>
         [
             new("Takvim", "Clinic", "Calendar"),
-            new("Onay kuyruğu", "Clinic", "Queue")
+            new("Onay kuyruğu", "Clinic", "Queue", Badge: "QueueCount")
         ],
         // Şube yöneticisi tek şubeyi yönettiği için "Şubem"; personel ekranı şube personeli (5c).
         UserRole.BranchManager =>

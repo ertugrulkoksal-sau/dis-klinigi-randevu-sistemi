@@ -1,7 +1,8 @@
 ﻿@using System.Security.Claims
 @using DisKlinigi.Core.Domain
 @{
-    // Menü ve kullanıcı satırı çerezdeki bilgilerden geliyor; sayfa başına ek sorgu yok.
+    // Menü ve kullanıcı satırı çerezdeki bilgilerden geliyor. Tek ek sorgu personelin menüsündeki
+    // onay kuyruğu sayısı (QueueCountViewComponent).
     var role = User.GetRole();
     var branchName = User.FindFirstValue(UserClaims.BranchName);
     var roleText = role is { } current
@@ -38,7 +39,10 @@
                     {
                         var active = item.Controller == currentController && item.Action == currentAction;
                         <a asp-controller="@item.Controller" asp-action="@item.Action"
-                           class="@(active ? "active" : null)" aria-current="@(active ? "page" : null)">@item.Text</a>
+                           class="@(active ? "active" : null)" aria-current="@(active ? "page" : null)">@item.Text @if (item.Badge is { } badge)
+                            {
+                                @await Component.InvokeAsync(badge)
+                            }</a>
                     }
                 </nav>
                 <div class="user-box">

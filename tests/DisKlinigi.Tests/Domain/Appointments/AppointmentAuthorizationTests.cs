@@ -113,9 +113,9 @@ public class AppointmentAuthorizationTests
         { "Başka hekim", false },
         { "Şubenin asistanı", true },
         { "Başka şubenin asistanı", false },
-        { "Şube yöneticisi", true },
+        { "Şube yöneticisi", false },      // yöneticiler randevuya dokunmuyor (K34)
         { "Başka şubenin yöneticisi", false },
-        { "Zincir yöneticisi", true },
+        { "Zincir yöneticisi", false },
     };
 
     [Theory]
@@ -197,8 +197,6 @@ public class AppointmentAuthorizationTests
     [Theory]
     [InlineData("Randevunun hekimi")]
     [InlineData("Şubenin asistanı")]
-    [InlineData("Şube yöneticisi")]
-    [InlineData("Zincir yöneticisi")]
     public void Personel_son_24_saatte_de_iptal_edebilir(string actorName)
     {
         var appointment = _clinic.Book(_clinic.Examination);

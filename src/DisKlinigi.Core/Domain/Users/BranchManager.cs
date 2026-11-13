@@ -32,8 +32,12 @@ public class BranchManager : User
     /// </summary>
     public override bool CanApprove(Appointment appointment) => false;
 
-    /// <summary>Kendi şubesindeki randevuyu iptal edebilir (ör. şube o gün kapanırsa).</summary>
-    public override bool CanCancel(Appointment appointment, DateTime now) => CanManageBranch(appointment.Branch);
+    /// <summary>
+    /// Yönetici randevu iptal etmiyor (K34). Şubenin ayarlarını yönetiyor; randevu işlemleri
+    /// randevunun hekiminde ve şubenin asistanında. İlk halinde kendi şubesindeki randevuyu iptal
+    /// edebiliyordu ama bunun için ayrı bir ekran gerekecekti, kapsamı büyütmemek için kaldırdım.
+    /// </summary>
+    public override bool CanCancel(Appointment appointment, DateTime now) => false;
 
     public void TransferTo(Branch branch)
     {

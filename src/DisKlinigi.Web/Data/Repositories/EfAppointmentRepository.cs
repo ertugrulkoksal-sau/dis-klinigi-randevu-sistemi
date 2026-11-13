@@ -68,6 +68,41 @@ public class EfAppointmentRepository : IAppointmentRepository
             .ToListAsync(cancellationToken);
     }
 
+    /// <remarks>İzlenmiyor; kuyrukta işlem yapılınca randevu <see cref="GetByIdAsync"/> ile yeniden yükleniyor.</remarks>
+    public async Task<IReadOnlyList<Appointment>> GetPendingAsync(CancellationToken cancellationToken = default) =>
+        await WithParties(_db.Appointments.AsNoTracking())
+            .Where(a => a.Status == AppointmentStatus.PendingApproval)
+            .OrderBy(a => a.Period.Start)
+            .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<Appointment>> GetForDentistOnDateAsync(
+        Dentist dentist, DateOnly date, CancellationToken cancellationToken = default)
+    {
+        var dayStart = date.ToDateTime(TimeOnly.MinValue);
+        var dayEnd = dayStart.AddDays(1);
+        var dentistId = dentist.Id;
+        return await WithParties(_db.Appointments.AsNoTracking())
+            .Where(a => a.Dentist.Id == dentistId)
+            .Where(a => a.Period.Start < dayEnd && a.Period.End > dayStart)
+            .OrderBy(a => a.Period.Start)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Appointment>> GetUpcomingForDentistAsync(
+        Dentist dentist, DateTime from, CancellationToken cancellationToken = default)
+    {
+        var active = AppointmentState.ActiveStatuses;
+        var dentistId = dentist.Id;
+        return await WithParties(_db.Appointments.AsNoTracking())
+            .Where(a => a.Dentist.Id == dentistId && active.Contains(a.Status) && a.Period.Start > from)
+            .OrderBy(a => a.Period.Start)
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <summary>Liste ekranlarının ve yetki sorularının baktığı üç taraf: hasta, hekim, şube.</summary>
+    private static IQueryable<Appointment> WithParties(IQueryable<Appointment> query) =>
+        query.Include(a => a.Patient).Include(a => a.Dentist).Include(a => a.Branch);
+
     public Task SaveChangesAsync(CancellationToken cancellationToken = default) => _db.SaveChangesAsync(cancellationToken);
 
     public void Add(Appointment appointment)

@@ -1,0 +1,128 @@
+@model AvailabilityViewModel
+@using DisKlinigi.Core.Domain
+@{
+    ViewData["Title"] = "Müsaitlik aralıkları";
+    ViewData["MenuAction"] = "Availability"; // form gönderilince de menüde "Müsaitlik" seçili kalsın
+
+    // "10 Kas'ta 2 randevu var"; randevular farklı günlerdeyse "3 randevu var; ilki 10 Kas'ta".
+    string Booked(IReadOnlyList<DisKlinigi.Core.Domain.Appointments.Appointment> list)
+    {
+        var dates = list.Select(a => DateOnly.FromDateTime(a.Period.Start)).Distinct().ToList();
+        var first = TurkishNames.Locative(Display.ShortDate(dates[0]));
+        return dates.Count == 1 ? $"{first} {list.Count} randevu var" : $"{list.Count} randevu var; ilki {first}";
+    }
+}
+
+<h1 class="page-title">Müsaitlik aralıkları</h1>
+<p class="page-lead">
+    Her hafta tekrar eden çalışma aralıklarınız. Hastalar sadece bu aralıklara, aralığın bağlı olduğu şubede randevu alabilir.
+</p>
+
+<div class="schedule-layout">
+    <section class="panel panel-flush" aria-labelledby="araliklarBaslik">
+        <h2 id="araliklarBaslik" class="section-title panel-pad">Tanımlı aralıklar</h2>
+        @if (Model.Windows.Count == 0)
+        {
+            <div class="empty-note panel-pad">Henüz aralık tanımlamadınız; hastalar size randevu alamıyor. Sağdaki formdan ekleyin.</div>
+        }
+        else
+        {
+            <div class="table-box table-plain">
+                <table class="table data-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Gün</th>
+                            <th scope="col">Şube</th>
+                            <th scope="col">Saat</th>
+                            <th scope="col">Şubenin o günkü saati</th>
+                            <th scope="col"><span class="visually-hidden">İşlem</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var usage in Model.Windows)
+                        {
+                            var window = usage.Window;
+                            var confirming = window.Id == Model.DeleteId && usage.CanRemove;
+                            <tr id="aralik-@window.Id">
+                                <td>@TurkishNames.Day(window.Day)</td>
+                                <td>@window.Branch.Name</td>
+                                <td><strong>@window.Hours</strong></td>
+                                <td class="muted">@(window.Branch.GetWorkingHours(window.Day)?.ToString() ?? "kapalı")</td>
+                                <td class="text-end actions-cell">
+                                    @if (!usage.CanRemove)
+                                    {
+                                        <span class="btn btn-outline-secondary btn-small disabled" aria-disabled="true" tabindex="0"
+                                              aria-describedby="neden-@window.Id">Sil</span>
+                                        <div id="neden-@window.Id" class="small muted">@Booked(usage.UpcomingAppointments)</div>
+                                    }
+                                    else if (confirming)
+                                    {
+                                        <form asp-action="RemoveAvailability" asp-route-id="@window.Id" method="post" class="inline-confirm">
+                                            <span class="small">Silinsin mi?</span>
+                                            <a asp-action="Availability" class="btn btn-outline-secondary btn-small">Vazgeç</a>
+                                            <button type="submit" class="btn btn-danger btn-small">Evet, sil</button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <a asp-action="Availability" asp-route-delete="@window.Id" asp-fragment="aralik-@window.Id"
+                                           class="btn btn-outline-danger btn-small">Sil…</a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        <p class="hint panel-pad">
+            İleri tarihte randevusu olan aralık silinemiyor; önce o randevuların iptal edilmesi gerekiyor. Diğer aralıklar silinmeden önce onay soruluyor.
+        </p>
+    </section>
+
+    <section class="panel" aria-labelledby="ekleBaslik">
+        <h2 id="ekleBaslik" class="section-title">Aralık ekle</h2>
+        <form asp-action="AddAvailability" method="post" class="stack" novalidate>
+            <div class="field">
+                <label asp-for="Form.BranchId" class="form-label"></label>
+                <select asp-for="Form.BranchId" class="form-select">
+                    @foreach (var branch in Model.Branches)
+                    {
+                        <option value="@branch.Id" selected="@(branch.Id == Model.Form.BranchId)">@branch.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="field">
+                <label asp-for="Form.Day" class="form-label"></label>
+                <select asp-for="Form.Day" class="form-select">
+                    @foreach (var day in Display.Week)
+                    {
+                        <option value="@day" selected="@(day == Model.Form.Day)">@TurkishNames.Day(day)</option>
+                    }
+                </select>
+            </div>
+            <div class="field-pair">
+                <div class="field">
+                    <label asp-for="Form.Start" class="form-label"></label>
+                    <input asp-for="Form.Start" type="time" step="900" class="form-control @(Model.Error is null ? null : "input-validation-error")"
+                           value="@Model.Form.Start?.ToString(Display.TimeParameterFormat)" />
+                    <span asp-validation-for="Form.Start" class="field-error"></span>
+                </div>
+                <div class="field">
+                    <label asp-for="Form.End" class="form-label"></label>
+                    <input asp-for="Form.End" type="time" step="900" class="form-control @(Model.Error is null ? null : "input-validation-error")"
+                           value="@Model.Form.End?.ToString(Display.TimeParameterFormat)" />
+                    <span asp-validation-for="Form.End" class="field-error"></span>
+                </div>
+            </div>
+            @if (Model.Error is { } error)
+            {
+                <div class="form-error" role="alert">@error</div>
+            }
+            <button type="submit" class="btn btn-primary btn-touch">Ekle</button>
+            <p class="hint small">
+                Kontroller: başlangıç bitişten önce olmalı, aralık şubenin o günkü saatine sığmalı ve aynı gün başka bir aralığınızla (hangi şubede olursa olsun) kesişmemeli.
+            </p>
+        </form>
+    </section>
+</div>

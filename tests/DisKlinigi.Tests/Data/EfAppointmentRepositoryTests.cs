@@ -96,6 +96,33 @@ public class EfAppointmentRepositoryTests : IAsyncLifetime
         Assert.Empty(result);
     }
 
+    // ---- Personel paneli sorguları (13 Kasım) ----
+
+    [Fact]
+    public async Task Bekleyenler_ve_hekimin_gunu_dogru_randevulari_tarih_sirasiyla_getirir()
+    {
+        var c = _clinic;
+        var pendingLater = Existing(c.Zeynep, c.Ayse, c.CanalTreatment, c.Serdivan, At(11));
+        var pendingEarlier = Existing(c.Can, c.Ayse, c.CanalTreatment, c.Serdivan, At(9).AddDays(-7));
+        var kadikoy = Existing(c.Ali, c.Ayse, c.Examination, c.Kadikoy, At(15));
+        var otherDentist = Existing(c.Deniz, c.Mehmet, c.Examination, c.Serdivan, At(10));
+        var nextDay = Existing(c.Ali, c.Ayse, c.Examination, c.Serdivan, At(9).AddDays(1));
+        await SaveAppointmentsAsync(pendingLater, kadikoy, otherDentist, nextDay, pendingEarlier);
+
+        await using var context = _db.CreateContext();
+        var clinic = await LoadedClinic.LoadAsync(context, c);
+        var repository = new EfAppointmentRepository(context);
+
+        var pending = await repository.GetPendingAsync();
+        var day = await repository.GetForDentistOnDateAsync(clinic.Ayse, Tuesday);
+        var upcoming = await repository.GetUpcomingForDentistAsync(clinic.Ayse, At(12));
+
+        Assert.Equal([pendingEarlier.Id, pendingLater.Id], pending.Select(a => a.Id));
+        Assert.All(pending, a => Assert.NotNull(a.Patient.FullName));
+        Assert.Equal([pendingLater.Id, kadikoy.Id], day.Select(a => a.Id));
+        Assert.Equal([kadikoy.Id, nextDay.Id], upcoming.Select(a => a.Id));
+    }
+
     // ---- Planlayıcı + EF Core ----
 
     [Fact]

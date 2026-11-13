@@ -88,7 +88,7 @@ public class ChairCapacityRuleTests
     {
         var first = Existing(_clinic.Zeynep, _clinic.Mehmet, _clinic.Cleaning, _clinic.Serdivan, At(9));
         var second = Existing(_clinic.Can, _clinic.Burak, _clinic.Cleaning, _clinic.Serdivan, At(9));
-        second.Cancel(_clinic.Admin, _clinic.Now);
+        second.Cancel(_clinic.Burak, _clinic.Now);   // randevunun hekimi
 
         Assert.False(Check(first, second).IsViolated);
     }

@@ -16,6 +16,12 @@ internal sealed class ConfirmedState : ActiveState
 
     public override AppointmentStatus Status => AppointmentStatus.Confirmed;
 
+    /// <summary>Başlamadan sadece iptal; başlama anından itibaren tamamlandı ya da gelmedi.</summary>
+    internal override AppointmentActions ActionsAt(Appointment appointment, DateTime now) =>
+        appointment.HasStarted(now)
+            ? AppointmentActions.Complete | AppointmentActions.MarkNoShow
+            : base.ActionsAt(appointment, now);
+
     internal override void Complete(Appointment appointment, User by, DateTime now) =>
         RecordOutcome(appointment, by, now, FinalState.Completed);
 

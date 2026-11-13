@@ -1,0 +1,15 @@
+@model (int AppointmentId, string? ReturnUrl)
+@using DisKlinigi.Core.Domain.Appointments
+@* Ret gerekçesi formu; takvim ve onay kuyruğu aynı formu kullanıyor (tasarım incelemesi, 9 Kasım). *@
+<form asp-action="Reject" asp-route-id="@Model.AppointmentId" method="post" class="reject-form">
+    <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+    <div class="field">
+        <label for="gerekce-@Model.AppointmentId" class="form-label">Ret gerekçesi (hastaya gösterilir)</label>
+        <textarea id="gerekce-@Model.AppointmentId" name="reason" class="form-control note-input" rows="2" required
+                  maxlength="@Appointment.MaxRejectionReasonLength"></textarea>
+    </div>
+    <div class="confirm-actions">
+        <a class="btn btn-outline-secondary btn-touch" href="@Model.ReturnUrl">Vazgeç</a>
+        <button type="submit" class="btn btn-danger btn-touch">Reddi kaydet</button>
+    </div>
+</form>

@@ -22,4 +22,7 @@ public interface IDentistRepository
     /// Randevu ekranı bunları <see cref="Dentist.CanServe"/> ile seçilen hizmete göre daraltıyor.
     /// </summary>
     Task<IReadOnlyList<Dentist>> GetWorkingAtAsync(Branch branch, CancellationToken cancellationToken = default);
+
+    /// <summary>Yüklenmiş hekimde yapılan değişiklikleri (müsaitlik aralığı ekleme/silme) kaydeder.</summary>
+    Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }

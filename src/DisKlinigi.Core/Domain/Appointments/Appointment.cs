@@ -29,6 +29,9 @@ public class Appointment : Entity
     /// <summary>Hastanın hekime yazabileceği notun en fazla uzunluğu (K35).</summary>
     public const int MaxPatientNoteLength = 500;
 
+    /// <summary>Ret gerekçesinin en fazla uzunluğu; veritabanındaki sütun da bu kadar.</summary>
+    public const int MaxRejectionReasonLength = 500;
+
     public Patient Patient { get; private set; } = null!;
     public Dentist Dentist { get; private set; } = null!;
     public Branch Branch { get; private set; } = null!;
@@ -134,6 +137,30 @@ public class Appointment : Entity
     public bool Involves(User user) =>
         user is not null && (Patient.IsSameAs(user) || user.CanApprove(this));
 
+    /// <summary>
+    /// Bu kullanıcı bu randevuda şu an hangi işlemleri yapabilir? Ekrandaki butonlar buna göre
+    /// çıkıyor: onaylı randevuda "Onayla" yok, "Tamamlandı" sadece saati gelmiş onaylı randevuda var.
+    /// </summary>
+    /// <remarks>
+    /// İki sorunun kesişimi (K27, K50): durum bu işleme izin veriyor mu (State deseni) ve kişinin bu
+    /// randevuyla yetkisi var mı (<see cref="User.CanApprove"/>, <see cref="User.CanCancel"/>; çok
+    /// biçimli cevaplar). Onay, ret ve sonuç işlemenin yetkisi aynı (<c>CanApprove</c>). Burada da
+    /// rol kontrolü yok; asistanla hekimin farkı kullanıcı sınıflarında.
+    /// </remarks>
+    public AppointmentActions ActionsFor(User user, DateTime now)
+    {
+        ArgumentNullException.ThrowIfNull(user);
+
+        var permitted = AppointmentActions.None;
+        if (user.CanApprove(this))
+            permitted |= AppointmentActions.Approve | AppointmentActions.Reject
+                | AppointmentActions.Complete | AppointmentActions.MarkNoShow;
+        if (user.CanCancel(this, now))
+            permitted |= AppointmentActions.Cancel;
+
+        return State.ActionsAt(this, now) & permitted;
+    }
+
     public void Approve(User by, DateTime now) => State.Approve(this, Require(by), now);
 
     /// <summary>
@@ -143,8 +170,12 @@ public class Appointment : Entity
     /// </summary>
     public void Reject(User by, string? reason = null)
     {
+        var trimmed = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim();
+        if (trimmed?.Length > MaxRejectionReasonLength)
+            throw new DomainException($"Ret gerekçesi en fazla {MaxRejectionReasonLength} karakter olabilir.");
+
         State.Reject(this, Require(by));
-        RejectionReason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim();
+        RejectionReason = trimmed;
     }
 
     public void Cancel(User by, DateTime now) => State.Cancel(this, Require(by), now);

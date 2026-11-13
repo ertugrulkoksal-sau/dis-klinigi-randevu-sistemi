@@ -32,6 +32,12 @@ public class EfDentistRepository : IDentistRepository
             .ToListAsync(cancellationToken);
     }
 
+    /// <remarks>
+    /// Silinen müsaitlik aralığı hekimin listesinden çıkınca EF Core onu sahipsiz kayıt olarak görüp
+    /// siliyor (ilişki zorunlu ve <c>Cascade</c>, <c>UserConfiguration</c>); ayrıca silme komutu gerekmiyor.
+    /// </remarks>
+    public Task SaveChangesAsync(CancellationToken cancellationToken = default) => _db.SaveChangesAsync(cancellationToken);
+
     /// <summary>Hekim her zaman bütün parçalarıyla yükleniyor (bkz. <see cref="IDentistRepository.GetByIdAsync"/>).</summary>
     private static IQueryable<Dentist> WithParts(IQueryable<Dentist> query) =>
         query
