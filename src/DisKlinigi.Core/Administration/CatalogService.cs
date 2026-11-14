@@ -27,11 +27,13 @@ public sealed class CatalogService
         _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
     }
 
-    public Task<IReadOnlyList<Department>> GetDepartmentsAsync(CancellationToken cancellationToken = default) =>
-        _catalog.GetDepartmentsAsync(cancellationToken);
+    /// <summary>Bölümler Türkçe alfabe sırasıyla.</summary>
+    public async Task<IReadOnlyList<Department>> GetDepartmentsAsync(CancellationToken cancellationToken = default) =>
+        (await _catalog.GetDepartmentsAsync(cancellationToken)).OrderBy(d => d.Name, TurkishNames.Comparer).ToList();
 
-    public Task<IReadOnlyList<Service>> GetServicesAsync(CancellationToken cancellationToken = default) =>
-        _catalog.GetServicesAsync(cancellationToken);
+    /// <summary>Hizmetler Türkçe alfabe sırasıyla.</summary>
+    public async Task<IReadOnlyList<Service>> GetServicesAsync(CancellationToken cancellationToken = default) =>
+        (await _catalog.GetServicesAsync(cancellationToken)).OrderBy(s => s.Name, TurkishNames.Comparer).ToList();
 
     public async Task<CreateResult<Department>> AddDepartmentAsync(User user, string? name, CancellationToken cancellationToken = default)
     {

@@ -1,0 +1,176 @@
+@model BranchesViewModel
+@using DisKlinigi.Core.Domain
+@{
+    var title = Model.CanOpenBranches ? "Şubeler" : "Şubem";
+    ViewData["Title"] = title;
+    ViewData["MenuAction"] = "Branches"; // form gönderilince de menüde bu ekran seçili kalsın
+    var selected = Model.Selected;
+}
+
+<div class="title-row">
+    <h1 class="page-title">@title</h1>
+    @if (Model.CanOpenBranches && !Model.ShowNewBranch)
+    {
+        <a asp-action="Branches" asp-route-id="@selected?.Id" asp-route-create="true" asp-fragment="yeniSube" class="btn btn-primary btn-touch">Yeni şube</a>
+    }
+</div>
+
+@if (Model.ShowNewBranch)
+{
+    <section id="yeniSube" class="panel admin-new" aria-labelledby="yeniSubeBaslik">
+        <h2 id="yeniSubeBaslik" class="section-title">Yeni şube</h2>
+        <form asp-action="CreateBranch" method="post" class="stack" novalidate>
+            <div class="field-grid">
+                <div class="field">
+                    <label asp-for="NewBranch.Name" class="form-label"></label>
+                    <input asp-for="NewBranch.Name" class="form-control" />
+                    <span asp-validation-for="NewBranch.Name" class="field-error"></span>
+                </div>
+                <div class="field">
+                    <label asp-for="NewBranch.City" class="form-label"></label>
+                    <input asp-for="NewBranch.City" class="form-control" />
+                    <span asp-validation-for="NewBranch.City" class="field-error"></span>
+                </div>
+                <div class="field">
+                    <label asp-for="NewBranch.ChairCount" class="form-label"></label>
+                    <input asp-for="NewBranch.ChairCount" type="number" min="1" max="50" class="form-control" />
+                    <span asp-validation-for="NewBranch.ChairCount" class="field-error"></span>
+                </div>
+            </div>
+            <div class="field">
+                <label asp-for="NewBranch.Address" class="form-label"></label>
+                <input asp-for="NewBranch.Address" class="form-control" />
+            </div>
+            @if (Model.NewBranchError is { } newError)
+            {
+                <div class="form-error" role="alert">@newError</div>
+            }
+            <p class="hint">Şube bütün günler kapalı ve bölümsüz açılıyor; çalışma saatleri ve bölümler ardından aşağıdaki formdan seçiliyor.</p>
+            <div class="form-actions form-actions-end">
+                <a asp-action="Branches" asp-route-id="@selected?.Id" class="btn btn-outline-secondary btn-touch">Vazgeç</a>
+                <button type="submit" class="btn btn-primary btn-touch">Şubeyi aç</button>
+            </div>
+        </form>
+    </section>
+}
+
+@if (selected is null)
+{
+    <div class="empty-note">Yönettiğiniz bir şube yok.</div>
+}
+else
+{
+    <div class="@(Model.Branches.Count > 1 ? "admin-layout" : null)">
+        @if (Model.Branches.Count > 1)
+        {
+            <nav class="stack branch-list" aria-label="Şubeler">
+                @foreach (var branch in Model.Branches)
+                {
+                    <a asp-action="Branches" asp-route-id="@branch.Id" class="choice-card @(branch.IsSameAs(selected) ? "selected" : null)"
+                       aria-current="@(branch.IsSameAs(selected) ? "page" : null)">
+                        <strong>@branch.Name</strong>
+                        <span class="small muted">@branch.City · @branch.ChairCount ünit · @branch.Departments.Count bölüm</span>
+                    </a>
+                }
+            </nav>
+        }
+
+        <form asp-action="SaveBranch" asp-route-id="@selected.Id" method="post" class="stack" novalidate>
+            <section class="panel" aria-labelledby="bilgiBaslik">
+                <h2 id="bilgiBaslik" class="section-title">Şube bilgileri</h2>
+                <div class="field-grid">
+                    <div class="field">
+                        <label asp-for="Form.Name" class="form-label"></label>
+                        <input asp-for="Form.Name" class="form-control" />
+                        <span asp-validation-for="Form.Name" class="field-error"></span>
+                    </div>
+                    <div class="field">
+                        <label asp-for="Form.City" class="form-label"></label>
+                        <input asp-for="Form.City" class="form-control" />
+                        <span asp-validation-for="Form.City" class="field-error"></span>
+                    </div>
+                    <div class="field">
+                        <label asp-for="Form.ChairCount" class="form-label"></label>
+                        <input asp-for="Form.ChairCount" type="number" min="1" max="50" class="form-control" />
+                        <span asp-validation-for="Form.ChairCount" class="field-error"></span>
+                    </div>
+                </div>
+                <div class="field">
+                    <label asp-for="Form.Address" class="form-label"></label>
+                    <input asp-for="Form.Address" class="form-control" />
+                    <span asp-validation-for="Form.Address" class="field-error"></span>
+                </div>
+            </section>
+
+            <section class="panel panel-flush" aria-labelledby="saatBaslik">
+                <h2 id="saatBaslik" class="section-title panel-pad">Çalışma saatleri</h2>
+                <div class="table-box table-plain">
+                    <table class="table data-table hours-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Gün</th>
+                                <th scope="col">Açık</th>
+                                <th scope="col">Açılış</th>
+                                <th scope="col">Kapanış</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (var i = 0; i < Model.Form.Days.Count; i++)
+                            {
+                                var day = Model.Form.Days[i];
+                                var dayName = TurkishNames.Day(day.Day);
+                                <tr>
+                                    <th scope="row">
+                                        @dayName
+                                        <input type="hidden" name="Form.Days[@i].Day" value="@day.Day" />
+                                    </th>
+                                    <td>
+                                        <input type="checkbox" class="form-check-input" name="Form.Days[@i].Open" value="true" checked="@day.Open"
+                                               id="acik-@i" aria-label="@dayName açık" />
+                                    </td>
+                                    <td>
+                                        <input type="time" step="900" class="form-control time-input" name="Form.Days[@i].Opens"
+                                               value="@day.Opens?.ToString(Display.TimeParameterFormat)" aria-label="@dayName açılış" />
+                                    </td>
+                                    <td>
+                                        <input type="time" step="900" class="form-control time-input" name="Form.Days[@i].Closes"
+                                               value="@day.Closes?.ToString(Display.TimeParameterFormat)" aria-label="@dayName kapanış" />
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <p class="hint panel-pad">
+                    "Açık" işareti kaldırılan gün kapalı; saat alanları boş bırakılabilir. Saat daraltılırken dışarıda kalan bir
+                    hekim müsaitliği varsa kayıt engellenir; önce o aralıkların düzeltilmesi gerekir.
+                </p>
+            </section>
+
+            <section class="panel" aria-labelledby="bolumBaslik">
+                <h2 id="bolumBaslik" class="section-title">Barındırılan bölümler</h2>
+                <div class="check-grid">
+                    @foreach (var department in Model.Departments)
+                    {
+                        <label class="check-item">
+                            <input type="checkbox" class="form-check-input" name="Form.DepartmentIds" value="@department.Id"
+                                   checked="@Model.Form.DepartmentIds.Contains(department.Id)" />
+                            @department.Name
+                        </label>
+                    }
+                </div>
+                <p class="hint">Hastalar bir şubede sadece buradaki bölümlerin hizmetlerine randevu alabilir.</p>
+            </section>
+
+            <div asp-validation-summary="ModelOnly" class="form-error" role="alert"></div>
+            @if (Model.Error is { } error)
+            {
+                <div class="form-error" role="alert">@error</div>
+            }
+            <div class="form-actions form-actions-end">
+                <a asp-action="Branches" asp-route-id="@selected.Id" class="btn btn-outline-secondary btn-touch">Vazgeç</a>
+                <button type="submit" class="btn btn-primary btn-touch">Kaydet</button>
+            </div>
+        </form>
+    </div>
+}

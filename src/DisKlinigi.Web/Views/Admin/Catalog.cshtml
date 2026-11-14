@@ -1,0 +1,164 @@
+@model CatalogViewModel
+@using DisKlinigi.Core.Domain
+@{
+    ViewData["Title"] = "Bölüm ve hizmetler";
+    ViewData["MenuAction"] = "Catalog";
+}
+
+<h1 class="page-title">Bölüm ve hizmetler</h1>
+<p class="page-lead">
+    @(Model.CanEdit
+        ? "Zincir genelindeki katalog. Hangi şubenin hangi bölümü barındırdığı Şubeler sayfasından seçiliyor."
+        : "Zincir genelindeki katalog; değişiklikleri zincir yöneticisi yapıyor. Şubenizin hangi bölümleri barındırdığını Şubem sayfasından seçebilirsiniz.")
+</p>
+
+<div class="catalog-layout">
+    <section class="panel" aria-labelledby="bolumlerBaslik">
+        <h2 id="bolumlerBaslik" class="section-title">Bölümler</h2>
+        <ul class="plain-list">
+            @foreach (var department in Model.Departments)
+            {
+                <li class="department-row" id="bolum-@department.Id">
+                    @if (department.Id == Model.RenameDepartmentId)
+                    {
+                        <form asp-action="RenameDepartment" asp-route-id="@department.Id" method="post" class="inline-form">
+                            <label for="ad-@department.Id" class="visually-hidden">Bölümün yeni adı</label>
+                            <input id="ad-@department.Id" name="name" value="@department.Name" class="form-control" maxlength="100" required />
+                            <a asp-action="Catalog" class="btn btn-outline-secondary btn-small">Vazgeç</a>
+                            <button type="submit" class="btn btn-primary btn-small">Kaydet</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <span>@department.Name</span>
+                        <span class="small muted">@Model.ServiceCount(department) hizmet</span>
+                        @if (Model.CanEdit)
+                        {
+                            <a asp-action="Catalog" asp-route-rename="@department.Id" asp-fragment="bolum-@department.Id" class="small">Adı değiştir</a>
+                        }
+                    }
+                </li>
+            }
+        </ul>
+        @if (Model.CanEdit)
+        {
+            <form asp-action="AddDepartment" method="post" class="inline-form">
+                <label for="yeniBolum" class="visually-hidden">Yeni bölüm adı</label>
+                <input id="yeniBolum" name="name" class="form-control" placeholder="Yeni bölüm adı" maxlength="100" required />
+                <button type="submit" class="btn btn-outline-primary btn-touch">Ekle</button>
+            </form>
+        }
+    </section>
+
+    <div class="stack">
+        <section class="panel panel-flush" aria-labelledby="hizmetlerBaslik">
+            <div class="title-row panel-pad section-head">
+                <h2 id="hizmetlerBaslik" class="section-title">Hizmetler</h2>
+                @if (Model.CanEdit)
+                {
+                    <a asp-action="Catalog" asp-route-newService="true" asp-fragment="hizmetFormu" class="btn btn-primary btn-touch">Yeni hizmet</a>
+                }
+            </div>
+            <div class="table-box table-plain">
+                <table class="table data-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Hizmet</th>
+                            <th scope="col">Bölüm</th>
+                            <th scope="col" class="text-end">Süre</th>
+                            <th scope="col" class="text-end">Ücret</th>
+                            <th scope="col">Onay</th>
+                            @if (Model.CanEdit)
+                            {
+                                <th scope="col"><span class="visually-hidden">İşlem</span></th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var service in Model.Services)
+                        {
+                            var editing = service.IsSameAs(Model.Editing);
+                            <tr class="@(editing ? "row-selected" : null)">
+                                <td>@if (editing) { <strong>@service.Name</strong> } else { @service.Name }</td>
+                                <td class="muted wrap">@service.Department.Name</td>
+                                <td class="text-end nowrap">@Display.Minutes(service.Duration)</td>
+                                <td class="text-end nowrap">@Display.Price(service.Price)</td>
+                                <td class="@(service.RequiresApproval ? "text-pending" : null)">@(service.RequiresApproval ? "Onay gerekir" : "Otomatik")</td>
+                                @if (Model.CanEdit)
+                                {
+                                    <td class="text-end">
+                                        @if (editing)
+                                        {
+                                            <span class="muted">Düzenleniyor</span>
+                                        }
+                                        else
+                                        {
+                                            <a asp-action="Catalog" asp-route-service="@service.Id" asp-fragment="hizmetFormu">Düzenle</a>
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        @if (Model.ShowServiceForm)
+        {
+            <section id="hizmetFormu" class="panel" aria-labelledby="formBaslik">
+                <h2 id="formBaslik" class="section-title">@(Model.Editing is null ? "Yeni hizmet" : $"Hizmeti düzenle: {Model.Editing.Name}")</h2>
+                <form asp-action="SaveService" asp-route-id="@Model.Editing?.Id" method="post" class="stack" novalidate>
+                    <div class="field-grid">
+                        <div class="field">
+                            <label asp-for="Form.Name" class="form-label"></label>
+                            <input asp-for="Form.Name" class="form-control" />
+                            <span asp-validation-for="Form.Name" class="field-error"></span>
+                        </div>
+                        <div class="field">
+                            <label asp-for="Form.DepartmentId" class="form-label"></label>
+                            <select asp-for="Form.DepartmentId" class="form-select">
+                                @foreach (var department in Model.Departments)
+                                {
+                                    <option value="@department.Id" selected="@(department.Id == Model.Form.DepartmentId)">@department.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label asp-for="Form.DurationMinutes" class="form-label"></label>
+                            <input asp-for="Form.DurationMinutes" type="number" min="@Service.DurationStepMinutes" max="@Service.MaxDurationMinutes"
+                                   step="@Service.DurationStepMinutes" class="form-control" aria-describedby="sureNotu" />
+                            <span id="sureNotu" class="small muted">@(Service.DurationStepMinutes)'in katı, en fazla @Service.MaxDurationMinutes</span>
+                            <span asp-validation-for="Form.DurationMinutes" class="field-error"></span>
+                        </div>
+                    </div>
+                    <div class="field field-narrow">
+                        <label asp-for="Form.Price" class="form-label"></label>
+                        <input asp-for="Form.Price" type="number" min="0" step="1" class="form-control"
+                               value="@Model.Form.Price.ToString("0", System.Globalization.CultureInfo.InvariantCulture)" />
+                        <span asp-validation-for="Form.Price" class="field-error"></span>
+                    </div>
+                    <label class="check-item">
+                        <input asp-for="Form.RequiresApproval" class="form-check-input" />
+                        @Html.DisplayNameFor(m => m.Form.RequiresApproval)
+                    </label>
+                    @if (Model.Editing is { } current)
+                    {
+                        <div class="info-note">
+                            Şu anki ücret @Display.Price(current.Price). Ücret değişirse daha önce alınmış randevular kendi ücretini korur;
+                            yeni ücret sadece bundan sonraki randevulara uygulanır.
+                        </div>
+                    }
+                    @if (Model.FormError is { } error)
+                    {
+                        <div class="form-error" role="alert">@error</div>
+                    }
+                    <div class="form-actions form-actions-end">
+                        <a asp-action="Catalog" class="btn btn-outline-secondary btn-touch">Vazgeç</a>
+                        <button type="submit" class="btn btn-primary btn-touch">Kaydet</button>
+                    </div>
+                </form>
+            </section>
+        }
+    </div>
+</div>

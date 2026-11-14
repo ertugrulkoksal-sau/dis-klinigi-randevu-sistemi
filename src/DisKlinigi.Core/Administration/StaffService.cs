@@ -139,7 +139,9 @@ public sealed class StaffService
     public async Task<IReadOnlyList<Dentist>> GetDentistsAsync(User user, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(user);
-        return user.CanManageChain ? await _dentists.GetAllAsync(cancellationToken) : [];
+        return user.CanManageChain
+            ? (await _dentists.GetAllAsync(cancellationToken)).OrderBy(d => d.FullName, TurkishNames.Comparer).ToList()
+            : [];
     }
 
     /// <summary>

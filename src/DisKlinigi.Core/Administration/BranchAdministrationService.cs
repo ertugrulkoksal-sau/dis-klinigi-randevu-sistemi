@@ -164,6 +164,7 @@ public sealed class BranchAdministrationService
             .Where(x => !hours.TryGetValue(x.Window.Day, out var open) || !open.Contains(x.Window.Hours))
             .OrderBy(x => ((int)x.Window.Day + 6) % 7)
             .ThenBy(x => x.Window.Hours.Start)
+            .ThenBy(x => x.Dentist.FullName, TurkishNames.Comparer)
             .ToList();
     }
 

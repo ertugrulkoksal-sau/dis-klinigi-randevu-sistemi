@@ -63,6 +63,3 @@ public sealed class RegisterViewModel
     [DataType(DataType.Password)]
     public string ConfirmPassword { get; set; } = "";
 }
-
-/// <summary>Henüz kodlanmamış ekranlar için geçici sayfa (bkz. <c>ComingSoon.cshtml</c>).</summary>
-public sealed record ComingSoonViewModel(string Title, string PlannedDay, string Description);
