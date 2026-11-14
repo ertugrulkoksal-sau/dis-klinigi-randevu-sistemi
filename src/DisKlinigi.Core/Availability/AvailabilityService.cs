@@ -12,15 +12,6 @@ public sealed record WindowUsage(AvailabilityWindow Window, IReadOnlyList<Appoin
     public bool CanRemove => UpcomingAppointments.Count == 0;
 }
 
-/// <summary>Müsaitlik değişikliğinin sonucu; reddedildiyse ekranda gösterilecek neden.</summary>
-public sealed record AvailabilityChangeResult(bool Succeeded, bool NotFound, string? Error)
-{
-    public static readonly AvailabilityChangeResult Done = new(true, false, null);
-    public static readonly AvailabilityChangeResult Missing = new(false, true, null);
-
-    public static AvailabilityChangeResult Refused(string error) => new(false, false, error);
-}
-
 /// <summary>
 /// Hekimin kendi müsaitlik aralıklarını yönetmesi (ekran 4c).
 /// </summary>
@@ -64,7 +55,7 @@ public sealed class AvailabilityService
     /// Aralık ekler. Kurallar hekim sınıfında; ihlal edilirse alan sınıfının mesajı ekrana dönüyor ve
     /// hiçbir şey kaydedilmiyor.
     /// </summary>
-    public async Task<AvailabilityChangeResult> AddAsync(
+    public async Task<ChangeResult> AddAsync(
         Dentist dentist, int branchId, DayOfWeek day, TimeOnly start, TimeOnly end, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dentist);
@@ -72,7 +63,7 @@ public sealed class AvailabilityService
         // Hekimin listesinde olmayan şube seçilemiyor; adres elle değiştirilse de başka şubeye aralık eklenmiyor.
         var branch = dentist.Branches.FirstOrDefault(b => b.Id == branchId);
         if (branch is null)
-            return AvailabilityChangeResult.Refused("Listeden çalıştığınız şubelerden birini seçin.");
+            return ChangeResult.Refused("Listeden çalıştığınız şubelerden birini seçin.");
 
         try
         {
@@ -80,11 +71,11 @@ public sealed class AvailabilityService
         }
         catch (DomainException ex)
         {
-            return AvailabilityChangeResult.Refused(ex.Message);
+            return ChangeResult.Refused(ex.Message);
         }
 
         await _dentists.SaveChangesAsync(cancellationToken);
-        return AvailabilityChangeResult.Done;
+        return ChangeResult.Done;
     }
 
     /// <summary>
@@ -92,23 +83,23 @@ public sealed class AvailabilityService
     /// Geçmiş randevular silmeyi engellemiyor, çünkü aralık her hafta tekrar eden bir kalıp ve silinmesi
     /// geçmiş kayıtları değiştirmiyor.
     /// </summary>
-    public async Task<AvailabilityChangeResult> RemoveAsync(Dentist dentist, int windowId, CancellationToken cancellationToken = default)
+    public async Task<ChangeResult> RemoveAsync(Dentist dentist, int windowId, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dentist);
 
         var window = dentist.Availability.FirstOrDefault(w => w.Id == windowId);
         if (window is null)
-            return AvailabilityChangeResult.Missing;
+            return ChangeResult.Missing;
 
         var booked = BookedIn(window, await _appointments.GetUpcomingForDentistAsync(dentist, Now, cancellationToken));
         if (booked.Count > 0)
-            return AvailabilityChangeResult.Refused(
+            return ChangeResult.Refused(
                 $"{TurkishNames.Day(window.Day)} {window.Hours} aralığında ({window.Branch.Name}) ileri tarihte {booked.Count} randevu var; " +
                 "aralık silinmeden önce bu randevuların iptal edilmesi gerekiyor.");
 
         dentist.RemoveAvailability(window);
         await _dentists.SaveChangesAsync(cancellationToken);
-        return AvailabilityChangeResult.Done;
+        return ChangeResult.Done;
     }
 
     /// <summary>Aralığa (şube, gün ve saat olarak) düşen randevular; aynı soru randevu kuralında da <see cref="AvailabilityWindow.Covers"/>.</summary>

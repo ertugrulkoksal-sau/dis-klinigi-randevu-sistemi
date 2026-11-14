@@ -1,4 +1,5 @@
 using DisKlinigi.Core.Abstractions;
+using DisKlinigi.Core.Domain;
 using DisKlinigi.Core.Domain.Users;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -26,6 +27,16 @@ public class EfUserRepository : IUserRepository
 
     public Task<User?> GetByIdAsync(int id, CancellationToken cancellationToken = default) =>
         WithBranch(_db.Users).FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
+
+    public async Task<IReadOnlyList<Assistant>> GetAssistantsAtAsync(Branch branch, CancellationToken cancellationToken = default)
+    {
+        var branchId = branch.Id;
+        return await _db.Users.OfType<Assistant>()
+            .Include(a => a.Branch)
+            .Where(a => a.Branch.Id == branchId)
+            .OrderBy(a => a.FullName)
+            .ToListAsync(cancellationToken);
+    }
 
     public async Task<bool> TryAddAsync(User user, CancellationToken cancellationToken = default)
     {

@@ -1,0 +1,167 @@
+@model DentistsViewModel
+@using DisKlinigi.Core.Domain
+@{
+    ViewData["Title"] = "Hekimler";
+    ViewData["MenuAction"] = "Dentists";
+    var editing = Model.Editing;
+}
+
+<div class="title-row">
+    <div>
+        <h1 class="page-title">Hekimler</h1>
+        <p class="page-subtitle">
+            Zincirdeki bütün hekimler. Hekimin uzmanlığı, verdiği hizmetler ve giriş e-postası bütün şubeler için ortak;
+            bu yüzden burada düzenleniyor.
+        </p>
+    </div>
+    <form method="get" asp-action="Dentists" class="inline-filter">
+        <div class="field">
+            <label for="branchId" class="form-label">Şube</label>
+            <div class="inline-filter">
+                <select id="branchId" name="branchId" class="form-select">
+                    <option value="">Tüm şubeler</option>
+                    @foreach (var branch in Model.Branches)
+                    {
+                        <option value="@branch.Id" selected="@(branch.Id == Model.BranchFilter)">@branch.Name</option>
+                    }
+                </select>
+                <button type="submit" class="btn btn-outline-secondary btn-touch">Göster</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<p class="hint back-link">
+    Şube personeli (asistanlar, şubeye atama):
+    @for (var i = 0; i < Model.Branches.Count; i++)
+    {
+        <a asp-action="Staff" asp-route-branchId="@Model.Branches[i].Id">@Model.Branches[i].Name</a>@(i < Model.Branches.Count - 1 ? " · " : "")
+    }
+</p>
+
+@if (Model.Created is { } created)
+{
+    <div class="created-account" role="status">
+        <strong>@created.User.FullName için hesap açıldı.</strong>
+        <span>Giriş adı <code>@created.User.Email</code>, geçici parola <code class="temp-password">@created.TemporaryPassword</code></span>
+        <span class="small">Bu parola bir daha gösterilmeyecek; şimdi not alıp hekime iletin. Müsaitlik aralıklarını hekim kendisi girecek.</span>
+    </div>
+}
+
+<div class="schedule-layout schedule-layout-wide">
+    <section class="panel panel-flush" aria-labelledby="hekimlerBaslik">
+        <div class="title-row panel-pad section-head">
+            <h2 id="hekimlerBaslik" class="section-title">Hekimler</h2>
+            @if (editing is not null)
+            {
+                <a asp-action="Dentists" asp-fragment="hekimFormu" class="btn btn-primary btn-touch">Yeni hekim</a>
+            }
+        </div>
+        @if (Model.Dentists.Count == 0)
+        {
+            <div class="empty-note panel-pad">Bu şubede çalışan hekim yok.</div>
+        }
+        else
+        {
+            <div class="table-box table-plain">
+                <table class="table data-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Ad soyad</th>
+                            <th scope="col">Uzmanlık</th>
+                            <th scope="col">Verdiği hizmetler</th>
+                            <th scope="col">Şubeler</th>
+                            <th scope="col"><span class="visually-hidden">İşlem</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var dentist in Model.Dentists)
+                        {
+                            var isEditing = dentist.IsSameAs(editing);
+                            <tr class="@(isEditing ? "row-selected" : null)">
+                                <td class="wrap"><strong>@dentist.FullName</strong></td>
+                                <td class="wrap">@dentist.Specialty.Name</td>
+                                <td class="wrap">@string.Join(", ", dentist.Services.Select(s => s.Name).Order())</td>
+                                <td class="muted wrap">@(dentist.Branches.Count == 0 ? "—" : string.Join(", ", dentist.Branches.Select(b => b.Name).Order()))</td>
+                                <td class="text-end">
+                                    @if (isEditing)
+                                    {
+                                        <span class="muted">Düzenleniyor</span>
+                                    }
+                                    else
+                                    {
+                                        <a asp-action="Dentists" asp-route-edit="@dentist.Id" asp-fragment="hekimFormu">Düzenle</a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+
+    <section id="hekimFormu" class="panel" aria-labelledby="formBaslik">
+        <h2 id="formBaslik" class="section-title">@(editing is null ? "Yeni hekim" : $"Hekimi düzenle: {editing.FullName}")</h2>
+        <form asp-action="SaveDentist" asp-route-id="@editing?.Id" method="post" class="stack" novalidate>
+            <div class="field">
+                <label asp-for="Form.FullName" class="form-label"></label>
+                <input asp-for="Form.FullName" class="form-control" autocomplete="off" />
+                <span asp-validation-for="Form.FullName" class="field-error"></span>
+            </div>
+            <div class="field">
+                <label asp-for="Form.Email" class="form-label"></label>
+                <input asp-for="Form.Email" class="form-control" autocomplete="off" />
+                <span asp-validation-for="Form.Email" class="field-error"></span>
+            </div>
+            <div class="field">
+                <label asp-for="Form.SpecialtyId" class="form-label"></label>
+                <select asp-for="Form.SpecialtyId" class="form-select">
+                    @foreach (var department in Model.Departments)
+                    {
+                        <option value="@department.Id" selected="@(department.Id == Model.Form.SpecialtyId)">@department.Name</option>
+                    }
+                </select>
+            </div>
+            <fieldset class="field">
+                <legend class="form-label">Verdiği hizmetler</legend>
+                @foreach (var group in Model.Services.GroupBy(s => s.Department.Name).OrderBy(g => g.Key))
+                {
+                    <div class="small muted check-group-title">@group.Key</div>
+                    @foreach (var service in group)
+                    {
+                        <label class="check-item">
+                            <input type="checkbox" class="form-check-input" name="Form.ServiceIds" value="@service.Id"
+                                   checked="@Model.Form.ServiceIds.Contains(service.Id)" />
+                            @service.Name
+                        </label>
+                    }
+                }
+            </fieldset>
+            <fieldset class="field">
+                <legend class="form-label">Çalışacağı şubeler</legend>
+                @foreach (var branch in Model.Branches)
+                {
+                    <label class="check-item">
+                        <input type="checkbox" class="form-check-input" name="Form.BranchIds" value="@branch.Id"
+                               checked="@Model.Form.BranchIds.Contains(branch.Id)" />
+                        @branch.Name
+                    </label>
+                }
+            </fieldset>
+            <div class="info-note">
+                @(editing is null
+                    ? "Hesap açılınca geçici parola bir kez gösterilir. Müsaitlik aralıklarını hekim kendisi girer."
+                    : "Hekimin müsaitlik aralığı olan şubeden çıkarılması reddedilir; önce o şubedeki aralıkların silinmesi gerekir.")
+            </div>
+            @if (Model.Error is { } error)
+            {
+                <div class="form-error" role="alert">@error</div>
+            }
+            <div class="form-actions form-actions-end">
+                <a asp-action="Dentists" class="btn btn-outline-secondary btn-touch">Vazgeç</a>
+                <button type="submit" class="btn btn-primary btn-touch">Hekimi kaydet</button>
+            </div>
+        </form>
+    </section>
+</div>

@@ -68,6 +68,24 @@ public static class TurkishNames
     private const string FrontVowels = "eiöüî";
     private const string HardConsonants = "fstkçşhp";
 
+    private static readonly System.Globalization.CompareInfo TurkishCompare =
+        System.Globalization.CultureInfo.GetCultureInfo("tr-TR").CompareInfo;
+
+    /// <summary>
+    /// Adları Türkçe alfabe sırasıyla dizmek için ("Çocuk diş muayenesi" C'den sonra, "İmplant" I'dan sonra).
+    /// SQLite metni bayt sırasıyla sıraladığı için Ç, İ, Ö, Ş, Ü ile başlayan adlar listenin sonuna düşüyordu.
+    /// </summary>
+    public static StringComparer Comparer { get; } =
+        StringComparer.Create(System.Globalization.CultureInfo.GetCultureInfo("tr-TR"), ignoreCase: true);
+
+    /// <summary>
+    /// İki ad büyük/küçük harf farkı dışında aynı mı ("Endodonti" ile "endodonti")? Türkçe kurallarıyla
+    /// karşılaştırılıyor; " İmplant" ile "implant" aynı, "Işık" ile "isik" farklı. Yönetici panelinde aynı adla
+    /// ikinci bölüm, şube ya da hizmet açılmasın diye.
+    /// </summary>
+    public static bool SameName(string? a, string? b) =>
+        TurkishCompare.Compare(a?.Trim(), b?.Trim(), System.Globalization.CompareOptions.IgnoreCase) == 0;
+
     /// <summary>Rolün menüde görünen adı (arayüz tasarımındaki "Ali Yıldız · Hasta" satırı).</summary>
     public static string Role(UserRole role) => role switch
     {

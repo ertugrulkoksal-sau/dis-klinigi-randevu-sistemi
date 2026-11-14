@@ -24,6 +24,9 @@ internal sealed class InMemoryUserRepository : IUserRepository
     public Task<User?> GetByIdAsync(int id, CancellationToken cancellationToken = default) =>
         Task.FromResult(_users.FirstOrDefault(u => u.Id == id));
 
+    public Task<IReadOnlyList<Assistant>> GetAssistantsAtAsync(DisKlinigi.Core.Domain.Branch branch, CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlyList<Assistant>>(_users.OfType<Assistant>().Where(a => a.Branch.IsSameAs(branch)).OrderBy(a => a.FullName).ToList());
+
     public Task<bool> TryAddAsync(User user, CancellationToken cancellationToken = default)
     {
         if (_users.Any(u => u.Email == user.Email))

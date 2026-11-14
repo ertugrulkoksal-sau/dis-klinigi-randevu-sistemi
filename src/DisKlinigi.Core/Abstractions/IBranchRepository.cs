@@ -15,5 +15,12 @@ public interface IBranchRepository
     /// <summary>Bütün şubeler, ile ve ada göre sıralı.</summary>
     Task<IReadOnlyList<Branch>> GetAllAsync(CancellationToken cancellationToken = default);
 
+    /// <summary>Şubeyi çalışma saatleri ve bölümleriyle getirir; değişiklik kaydedilebilsin diye izlenen nesne.</summary>
     Task<Branch?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+
+    /// <summary>Yeni şubeyi kaydedilmek üzere ekler (yönetici paneli, "Yeni şube").</summary>
+    void Add(Branch branch);
+
+    /// <summary>Eklenen ya da yüklenip değiştirilen şubeleri kaydeder.</summary>
+    Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }

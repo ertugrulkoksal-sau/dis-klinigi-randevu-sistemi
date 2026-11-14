@@ -1,0 +1,174 @@
+@model StaffViewModel
+@using DisKlinigi.Core.Domain
+@{
+    ViewData["Title"] = "Personel";
+    // Zincir yöneticisinin menüsündeki "Personel" hekim kaydına gidiyor; bu sayfa oradan açılıyor.
+    ViewData["MenuAction"] = Model.Viewer.CanManageChain ? "Dentists" : "Staff";
+    var staff = Model.Staff;
+}
+
+<div class="title-row">
+    <div>
+        <h1 class="page-title">Personel</h1>
+        @if (staff is not null)
+        {
+            <p class="page-subtitle">@TurkishNames.Locative(staff.Branch.Name) çalışan hekim ve asistanlar.</p>
+        }
+    </div>
+    @if (Model.BranchChoices.Count > 0)
+    {
+        <form method="get" asp-action="Staff" class="inline-filter">
+            <div class="field">
+                <label for="branchId" class="form-label">Şube</label>
+                <div class="inline-filter">
+                    <select id="branchId" name="branchId" class="form-select">
+                        @foreach (var choice in Model.BranchChoices)
+                        {
+                            <option value="@choice.Id" selected="@(choice.IsSameAs(staff?.Branch))">@choice.Name</option>
+                        }
+                    </select>
+                    <button type="submit" class="btn btn-outline-secondary btn-touch">Göster</button>
+                </div>
+            </div>
+        </form>
+    }
+</div>
+
+@if (Model.Viewer.CanManageChain)
+{
+    <p class="hint back-link"><a asp-action="Dentists">← Zincirdeki bütün hekimler</a></p>
+}
+
+@if (Model.Created is { } created)
+{
+    <div class="created-account" role="status">
+        <strong>@created.User.FullName için hesap açıldı.</strong>
+        <span>Giriş adı <code>@created.User.Email</code>, geçici parola <code class="temp-password">@created.TemporaryPassword</code></span>
+        <span class="small">Bu parola bir daha gösterilmeyecek ve hiçbir yerde düz metin olarak saklanmıyor; şimdi not alıp personele iletin.</span>
+    </div>
+}
+
+@if (staff is null)
+{
+    <div class="empty-note">Yönettiğiniz bir şube yok.</div>
+}
+else
+{
+    var branchId = staff.Branch.Id;
+    <div class="schedule-layout">
+        <section class="panel panel-flush" aria-labelledby="personelBaslik">
+            <h2 id="personelBaslik" class="section-title panel-pad">Şube personeli</h2>
+            <div class="table-box table-plain">
+                <table class="table data-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Ad soyad</th>
+                            <th scope="col">Rol</th>
+                            <th scope="col">Uzmanlık / hizmetler</th>
+                            <th scope="col">Diğer şubeler</th>
+                            <th scope="col"><span class="visually-hidden">İşlem</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var dentist in staff.Dentists)
+                        {
+                            var others = dentist.Branches.Where(b => !b.IsSameAs(staff.Branch)).Select(b => b.Name).ToList();
+                            <tr id="hekim-@dentist.Id">
+                                <td class="wrap"><strong>@dentist.FullName</strong></td>
+                                <td>Hekim</td>
+                                <td class="wrap">@dentist.Specialty.Name · @string.Join(", ", dentist.Services.Select(s => s.Name).Order())</td>
+                                <td class="muted wrap">@(others.Count == 0 ? "—" : string.Join(", ", others))</td>
+                                <td class="text-end actions-cell">
+                                    @if (dentist.Id == Model.RemoveId)
+                                    {
+                                        <form asp-action="RemoveDentist" asp-route-branchId="@branchId" asp-route-dentistId="@dentist.Id" method="post" class="inline-confirm">
+                                            <span class="small">Şubeden çıkarılsın mı?</span>
+                                            <a asp-action="Staff" asp-route-branchId="@branchId" class="btn btn-outline-secondary btn-small">Vazgeç</a>
+                                            <button type="submit" class="btn btn-danger btn-small">Evet, çıkar</button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <a asp-action="Staff" asp-route-branchId="@branchId" asp-route-remove="@dentist.Id" asp-fragment="hekim-@dentist.Id"
+                                           class="btn btn-outline-secondary btn-small">Şubeden çıkar…</a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                        @foreach (var assistant in staff.Assistants)
+                        {
+                            <tr>
+                                <td><strong>@assistant.FullName</strong></td>
+                                <td>Asistan</td>
+                                <td class="muted">Onay kuyruğu, iptal</td>
+                                <td class="muted">Sadece bu şube</td>
+                                <td></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            @if (staff.Dentists.Count == 0 && staff.Assistants.Count == 0)
+            {
+                <div class="empty-note panel-pad">Bu şubede henüz personel yok. Sağdaki formlardan hekim atayabilir ve asistan hesabı açabilirsiniz.</div>
+            }
+            <p class="hint panel-pad">
+                Bu şubede müsaitlik aralığı olan hekim şubeden çıkarılamıyor; önce hekimin bu şubedeki aralıkları silinmeli.
+                Hekimin uzmanlığı, verdiği hizmetler ve giriş e-postası bütün şubeler için ortak olduğundan bunları zincir yöneticisi düzenliyor.
+            </p>
+        </section>
+
+        <div class="stack">
+            <section class="panel" aria-labelledby="ataBaslik">
+                <h2 id="ataBaslik" class="section-title">Şubeye hekim ata</h2>
+                @if (staff.Assignable.Count == 0)
+                {
+                    <p class="hint">Zincirde kayıtlı bütün hekimler bu şubede çalışıyor.</p>
+                }
+                else
+                {
+                    <form asp-action="AssignDentist" asp-route-branchId="@branchId" method="post" class="stack">
+                        <div class="field">
+                            <label for="dentistId" class="form-label">Hekim</label>
+                            <select id="dentistId" name="dentistId" class="form-select">
+                                @foreach (var dentist in staff.Assignable)
+                                {
+                                    var where = dentist.Branches.Count == 0 ? "şubesi yok" : string.Join(", ", dentist.Branches.Select(b => b.Name));
+                                    <option value="@dentist.Id">@dentist.FullName (@dentist.Specialty.Name · @where)</option>
+                                }
+                            </select>
+                        </div>
+                        <p class="hint small">Listede zincirde kayıtlı, bu şubede çalışmayan hekimler var. Atanan hekim bu şube için müsaitlik aralıklarını kendisi girer.</p>
+                        <button type="submit" class="btn btn-outline-primary btn-touch">Şubeye ata</button>
+                    </form>
+                }
+            </section>
+
+            <section class="panel" aria-labelledby="asistanBaslik">
+                <h2 id="asistanBaslik" class="section-title">Yeni asistan</h2>
+                <form asp-action="CreateAssistant" asp-route-branchId="@branchId" method="post" class="stack" novalidate>
+                    <div class="field">
+                        <label asp-for="Form.FullName" class="form-label"></label>
+                        <input asp-for="Form.FullName" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="Form.FullName" class="field-error"></span>
+                    </div>
+                    <div class="field">
+                        <label asp-for="Form.Email" class="form-label"></label>
+                        <input asp-for="Form.Email" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="Form.Email" class="field-error"></span>
+                    </div>
+                    <p class="hint">Şube: <strong>@staff.Branch.Name</strong></p>
+                    <div class="info-note">Hesap açılınca geçici parola bir kez gösterilir; asistana siz iletirsiniz.</div>
+                    @if (Model.Error is { } error)
+                    {
+                        <div class="form-error" role="alert">@error</div>
+                    }
+                    <div class="form-actions form-actions-end">
+                        <a asp-action="Staff" asp-route-branchId="@branchId" class="btn btn-outline-secondary btn-touch">Vazgeç</a>
+                        <button type="submit" class="btn btn-primary btn-touch">Hesabı aç</button>
+                    </div>
+                </form>
+            </section>
+        </div>
+    </div>
+}

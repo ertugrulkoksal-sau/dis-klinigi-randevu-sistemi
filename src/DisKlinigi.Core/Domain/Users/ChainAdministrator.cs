@@ -22,7 +22,7 @@ public class ChainAdministrator : User
 
     public override bool CanManageBranch(Branch branch) => branch is not null;
 
-    public override bool CanManageCatalog => true;
+    public override bool CanManageChain => true;
 
     /// <summary>Şube yöneticisiyle aynı gerekçe: onay tıbbi bir karar, yöneticinin işi değil (K27).</summary>
     public override bool CanApprove(Appointment appointment) => false;

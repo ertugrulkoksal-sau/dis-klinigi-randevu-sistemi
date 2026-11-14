@@ -1047,3 +1047,184 @@ body {
   padding-top: 16px;
   padding-bottom: 16px;
 }
+
+/* ---- Yönetici paneli (ekran 5a–5d) ---- */
+
+.admin-layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.catalog-layout {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.schedule-layout-wide {
+  grid-template-columns: minmax(0, 1fr) 340px;
+}
+
+/* Filtre kutusunun içinde liste ve "Göster" yan yana kalsın (başlık satırı darken alt alta düşüyordu). */
+.inline-filter .inline-filter {
+  flex-wrap: nowrap;
+}
+
+@media (max-width: 900px) {
+  .admin-layout,
+  .catalog-layout,
+  .schedule-layout-wide {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-new {
+  margin-bottom: 24px;
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 760px) {
+  .field-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field-narrow {
+  max-width: 240px;
+}
+
+.form-actions-end {
+  justify-content: flex-end;
+}
+
+.hours-table th,
+.hours-table td {
+  vertical-align: middle;
+}
+
+.hours-table th[scope="row"] {
+  font-weight: 500;
+}
+
+.time-input {
+  width: 130px;
+}
+
+.check-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px 16px;
+}
+
+.check-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 32px;
+}
+
+.check-item .form-check-input {
+  margin: 0;
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+
+.check-group-title {
+  margin-top: 6px;
+}
+
+fieldset.field {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.plain-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.department-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--dk-border);
+}
+
+.inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.inline-form .form-control {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+
+.department-row .inline-form {
+  grid-column: 1 / -1;
+}
+
+.section-head {
+  margin-bottom: 8px;
+}
+
+/* Uzun metinli sütunlar (hizmet listeleri, şube adları) alt satıra geçebilsin; tablo gereksiz yere kaymasın. */
+.data-table td.wrap {
+  white-space: normal;
+  min-width: 120px;
+}
+
+.row-selected td {
+  background: var(--dk-primary-soft);
+}
+
+.text-pending {
+  color: #8A5A12;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.info-note {
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #EEF4FB;
+  color: #1E3A5C;
+  font-size: 14px;
+}
+
+.created-account {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 24px;
+  padding: 16px 18px;
+  border: 1px solid var(--dk-primary);
+  border-radius: 12px;
+  background: var(--dk-primary-soft);
+}
+
+.temp-password {
+  font-size: 16px;
+  letter-spacing: 0.05em;
+}
+
+.back-link {
+  margin: -12px 0 20px;
+}

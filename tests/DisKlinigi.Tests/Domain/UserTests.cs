@@ -14,7 +14,7 @@ public class UserTests
     // Her rolden bir kullanıcı; yetki tablosu testleri bunlar üzerinden.
     public static TheoryData<string, User, bool, bool, bool> RoleMatrix() => new()
     {
-        // rol adı, kullanıcı, Serdivan'ı yönetir mi, Kadıköy'ü yönetir mi, kataloğu yönetir mi
+        // rol adı, kullanıcı, Serdivan'ı yönetir mi, Kadıköy'ü yönetir mi, zincir geneli kayıtları (katalog, şube açma, hekim kaydı) yönetir mi
         { "Hasta", new Patient("Ali Yıldız", "ali@ornek.com", Hash), false, false, false },
         { "Hekim", new Dentist("Ayşe Kaya", "ayse@ornek.com", Hash, Endodontics), false, false, false },
         { "Asistan", new Assistant("Elif Şahin", "elif@ornek.com", Hash, Serdivan), false, false, false },
@@ -25,11 +25,11 @@ public class UserTests
     [Theory]
     [MemberData(nameof(RoleMatrix))]
     public void Her_rol_yetki_sorularini_kendi_kuraliyla_cevaplar(
-        string roleName, User user, bool managesSerdivan, bool managesKadikoy, bool managesCatalog)
+        string roleName, User user, bool managesSerdivan, bool managesKadikoy, bool managesChain)
     {
         Assert.True(managesSerdivan == user.CanManageBranch(Serdivan), $"{roleName} / Serdivan");
         Assert.True(managesKadikoy == user.CanManageBranch(Kadikoy), $"{roleName} / Kadıköy");
-        Assert.True(managesCatalog == user.CanManageCatalog, $"{roleName} / katalog");
+        Assert.True(managesChain == user.CanManageChain, $"{roleName} / zincir");
     }
 
     [Fact]

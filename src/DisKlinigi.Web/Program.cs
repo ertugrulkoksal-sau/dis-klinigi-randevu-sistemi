@@ -3,6 +3,7 @@ using System.Text.Encodings.Web;
 using System.Text.Unicode;
 using DisKlinigi.Core.Abstractions;
 using DisKlinigi.Core.Accounts;
+using DisKlinigi.Core.Administration;
 using DisKlinigi.Core.Appointments;
 using DisKlinigi.Core.Availability;
 using DisKlinigi.Core.Booking;
@@ -46,6 +47,9 @@ foreach (var rule in BookingRules.CreateDefault())
 builder.Services.AddScoped<AppointmentScheduler>();
 builder.Services.AddScoped<AppointmentService>();
 builder.Services.AddScoped<AvailabilityService>();
+builder.Services.AddScoped<BranchAdministrationService>();
+builder.Services.AddScoped<CatalogService>();
+builder.Services.AddScoped<StaffService>();
 
 builder.Services.AddSingleton<IPasswordHasher, AspNetPasswordHasher>();
 builder.Services.AddScoped<AccountService>();

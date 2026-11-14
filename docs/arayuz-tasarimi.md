@@ -86,11 +86,12 @@ genişlikte masaüstü görünümü.
 | 11 Kas | Ekran 1 (giriş ve hasta kaydı), ortak sayfa düzeni (role göre üst menü, kullanıcı satırı, çıkış), "yetki yok" sayfası. Renkler `site.css`'te değişken olarak; Bootstrap'in renkleri bunlarla değiştirildi. Diğer ekranların yerinde şimdilik "bu ekran X günü kodlanacak" yazan sayfa var (K44). |
 | 12 Kas | Ekran 2a (şube, bölüm, hizmet, hekim; adım göstergesi, "Onay gerekir" rozeti, hekim yok boş durumu), ekran 2b (gün, boş saatler, özet kartı, hekime not, boş gün ve "kaydederken saat dolmuşsa" durumu), ekran 3 (yaklaşan randevular, iptal onay adımı, 24 saat kala pasif buton ve nedeni, geçmiş tablosu, ret gerekçesi, bütün durum rozetleri, boş durum). Ortak düzene sayfa üstü hata mesajı eklendi. Tasarımdaki kesikli "örnek" kutuları uygulamada sadece o durum gerçekten oluşunca görünüyor. |
 | 13 Kas | Ekran 4a (günlük takvim: randevular ve boş aralıklar, "şu an" çizgisi, önceki/sonraki gün ve "Bugün", duruma göre Onayla / Reddet… / Tamamlandı ve Gelmedi olarak işaretle / İptal et…, günün özeti; asistanda hekim seçici), ekran 4b (onay kuyruğu: hasta notu ve alınma zamanı, "Saati geçti" rozetli ve sadece "Reddet…" olan kart, ret gerekçesi formu, asistanda hekim filtresi, boş durum), ekran 4c (aralık tablosu, şubenin o günkü saati, ileri tarihte randevusu olan aralıkta pasif "Sil" ve nedeni, silmeden önce onay, aralık ekleme formu ve kurala takılınca alan sınıfının mesajı). Üst menüde onay kuyruğunun yanında bekleyen sayısı. |
+| 14 Kas | Ekran 5a (şube listesi, şube bilgileri ve ünit sayısı, yedi günün çalışma saatleri, barındırılan bölümler, "Yeni şube"; şube yöneticisinde başlık "Şubem" ve sadece kendi şubesi, sol liste yok), ekran 5b (bölümler ve hizmet sayıları, "Adı değiştir", yeni bölüm, hizmet tablosu, "Yeni hizmet" ve "Düzenle", düzenlenen satır vurgulu, ücret değişikliği notu; şube yöneticisinde salt okunur), ekran 5c (şube personeli, "Şubeden çıkar…" ve onay adımı, şubeye hekim atama, yeni asistan ve geçici parolanın bir kez gösterilmesi; zincir yöneticisinde şube seçici), ekran 5d (hekim tablosu, şube filtresi, yeni hekim ve "Düzenle" aynı formda, hizmetler bölüme göre gruplu). Yer tutucu sayfa kaldırıldı; bütün ekranlar kodlandı. |
 
 Giriş ekranı tasarımındaki "Prototip gezintisi" bağlantıları sadece tasarımda ekranlar arasında
 gezinmek için olduğundan uygulamaya alınmadı.
 
-Tasarımdan bilerek ayrıldığım noktalar (12 ve 13 Kasım):
+Tasarımdan bilerek ayrıldığım noktalar (12–14 Kasım):
 
 | Ekran | Tasarımda | Uygulamada | Neden |
 |---|---|---|---|
@@ -107,6 +108,15 @@ Tasarımdan bilerek ayrıldığım noktalar (12 ve 13 Kasım):
 | 4b | Hekimin kuyruğunda da sadece hekim adı | Hekimin kuyruğunda şube adı da yazıyor | Hekim birden fazla şubede çalışabiliyor; asistanın kuyruğu tek şube olduğu için orada yazılmıyor. |
 | 4c | Hata "Aralık, Serdivan Şubesi'nin Cumartesi çalışma saatine (09:00–14:00) sığmıyor." | "10:00–16:00 aralığı, Serdivan Şubesi Cumartesi çalışma saatine (09:00–14:00) sığmıyor." | Mesaj alan sınıfından (`Dentist.AddAvailability`, 7 Kasım) olduğu gibi geliyor; ilgi eki için ikinci bir dil kuralı yazmadım. Hangi aralığın reddedildiği de görünüyor. |
 | 4c | Silinemeyen aralıkta "10 Kas'ta 2 randevu var" | Randevular farklı günlerdeyse "3 randevu var; ilki 10 Kas'ta" | Tasarımdaki örnekte randevular tek gündeydi; birden fazla gün için bir biçim gerekiyordu. |
+| 5a | Şube yöneticisi için ayrı bir görünüm yok | "Şubem" başlığı, sol şube listesi ve "Yeni şube" yok | Tek şubelik listenin bir anlamı yok; şube açmak zincir yöneticisinin işi (K54). |
+| 5a | Saat alanında tarayıcıya göre değişen saat seçici | Aynı; ayrıca "Açık" işareti kaldırılan günün saatleri yok sayılıyor | Kapalı gün için saat silmeyi zorunlu kılmak gereksiz bir adım olurdu. |
+| 5b | Ücret değişikliği notu eski ve yeni ücreti yazarken gösteriliyor ("5.000 ₺ → 5.500 ₺ olacak") | Formda şu anki ücret ve genel not; eski → yeni ücret kayıttan sonra mesajda | Yazarken güncellemek JavaScript demekti; sayfalar JavaScript'siz ("Ortak kararlar"). |
+| 5b | Ücret alanı | Tam lira (kuruşsuz) | Sayı alanı noktalı ondalık gönderiyor, Türkçe kültürde nokta binlik ayracı; 5500.50 yanlış okunurdu. Örnek ücretlerin hepsi tam lira. |
+| 5c, 5d | Yeni personel formunda "Cep telefonu (isteğe bağlı)" | Alan yok | Personel telefonu sistemde hiçbir yerde kullanılmıyor; sütun ve migration eklemedim (K57). |
+| 5c | Asistan satırında "Düzenle" | Yok | Asistan hesabını düzenlemek ödevin "kayıt" maddesinin dışında kaldı (K57). |
+| 5c | Diğer şubelerde kısa ad ("Kadıköy") | Şubenin tam adı | 2a'daki ile aynı neden. |
+| 5d | Verdiği hizmetler listesi uzmanlığa göre daraltılmış görünüyor | Bütün hizmetler, bölüme göre gruplu | Hekimin verdiği hizmetler uzmanlığıyla sınırlı değil (endodontist dolgu da yapabiliyor, `Dentist.Specialty` açıklaması). |
+| 5d | "Yeni hekim" butonu her zaman | Sadece bir hekim düzenlenirken (form zaten yeni hekim formu değilken) | Form sayfada hep açık; buton yeni hekim formuna dönmek için. |
 
 ## Ortak kararlar
 
@@ -138,8 +148,9 @@ Ekranları çizerken alan modelinde olmayan birkaç ayrıntı çıktı. Durumlar
 3. Reddederken **gerekçe** yazılıyor ve hastaya gösteriliyor. *Kodda var (`RejectionReason`).*
 4. İleri tarihte randevusu olan müsaitlik aralığı **silinemiyor**; şube çalışma saati daraltılırken
    dışarıda kalan müsaitlik varsa kayıt engelleniyor. Etkilenen kayıtların listelenmesi kapsam dışı.
+   *Kodda var (K52, 13 Kasım; K56, 14 Kasım). Mesaj ilk aralığı hekim adıyla ve toplam sayıyı söylüyor.*
 5. Personel hesabı yönetici tarafından **geçici parolayla** açılıyor; ilk girişte değiştirme zorunlu
-   değil (K36).
+   değil (K36). *Kodda var (K55, 14 Kasım).*
 
 ## Bağımsız inceleme (9 Kasım)
 
@@ -177,4 +188,4 @@ ekranındaki tabloyla aynı bilgiyi veren haftalık görünüm kaldırıldı.
 | 10 Kas | ✓ Yapıldı. `Appointment`'a hasta notu (en fazla 500 karakter) ve oluşturulma zamanı (K35). `Dentist` hata mesajlarındaki "Serdivan Şubesi şubesinde" tekrarı düzeltildi; şube adı artık kural mesajlarındaki gibi parantez içinde yazıyor ("… bu şubede çalışmıyor (Serdivan Şubesi)"). |
 | 12 Kas | ✓ Yapıldı. Kural mesajları ekrandaki metinle aynı: "Dt. Ayşe Kaya bu saat aralığında başka bir randevuda." ve "Serdivan Şubesi'ndeki 4 ünitin hepsi bu saat aralığının bir kısmında dolu." Şube adına ek `TurkishNames.Locative` ile getiriliyor (K48). |
 | 13 Kas | ✓ Yapıldı. İleri tarihte aktif randevusu olan müsaitlik aralığı silinemiyor; kural `AvailabilityService.RemoveAsync`'te (K52). `BranchManager.CanCancel` ve `ChainAdministrator.CanCancel` artık `false`, yetki tablosu testleri güncellendi (K34). |
-| 14 Kas | Hekim kaydı ve ortak bilgileri sadece zincir yöneticisi; şube yöneticisi atama/çıkarma ve asistan hesabı. Şube saati daraltılırken dışarıda kalan müsaitlik kontrolü (K24). |
+| 14 Kas | ✓ Yapıldı. Hekim kaydı ve ortak bilgileri sadece zincir yöneticisi (`CanManageChain`, K54); şube yöneticisi atama/çıkarma ve asistan hesabı (`CanManageBranch`). Şube saati daraltılırken dışarıda kalan müsaitlik kontrolü `BranchAdministrationService`'te (K24, K56). |

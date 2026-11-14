@@ -24,6 +24,18 @@ public class EfBranchRepository : IBranchRepository
     public Task<Branch?> GetByIdAsync(int id, CancellationToken cancellationToken = default) =>
         WithParts(_db.Branches).FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
 
+    public void Add(Branch branch)
+    {
+        ArgumentNullException.ThrowIfNull(branch);
+        _db.Branches.Add(branch);
+    }
+
+    /// <remarks>
+    /// Kapatılan günün kaydı şubenin listesinden çıkınca EF Core onu sahipsiz kayıt olarak siliyor
+    /// (<c>BranchConfiguration</c>, sahibine ait tablo); ayrıca silme komutu gerekmiyor.
+    /// </remarks>
+    public Task SaveChangesAsync(CancellationToken cancellationToken = default) => _db.SaveChangesAsync(cancellationToken);
+
     /// <summary>Şube her zaman çalışma saatleri ve bölümleriyle birlikte yükleniyor.</summary>
     private static IQueryable<Branch> WithParts(IQueryable<Branch> query) =>
         query

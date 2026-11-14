@@ -315,7 +315,7 @@ Uç uca aralıklar serbest (sabah Serdivan 09:00–13:00, öğleden sonra Kadık
 iki aralığa bölünen bir randevu (12:30–13:30) kabul edilmiyor. Müsaitlik aralığı olan
 şubeden hekim çıkarılamıyor. Şube çalışma saati sonradan daraltılırsa dışarıda kalan
 aralıklar şube sınıfının göremediği bir şey; bu kontrol yönetici paneli gününde (14 Kasım)
-servis katmanında yapılacak.
+servis katmanında yapıldı (K56).
 
 **K25 – Hizmet süresi 5 dakikanın katı, en fazla 240 dakika.**
 Boş saatler çeyrek saatlik adımlarla üretilecek (arayüz tasarımında önerildi), bu yüzden
@@ -569,7 +569,8 @@ kapsamında değil; kilitleme için `User`'a başarısız deneme sayısı ve kil
 ve `AdminController` (şubeler, katalog, personel, hekim kaydı). Politikalar controller düzeyinde,
 istisnalar eylem düzeyinde (müsaitlik sadece hekim, hekim kaydı sadece zincir yöneticisi). Menüdeki
 bütün bağlantılar bugün var olan sayfalara gidiyor; içerikleri 12–14 Kasım'da dolacak ve o güne kadar
-"bu ekran X günü kodlanacak" yazıyor. Böylece rol bazlı erişim bugünden uçtan uca test edilebiliyor.
+"bu ekran X günü kodlanacak" yazıyor. Böylece rol bazlı erişim bugünden uçtan uca test edilebiliyor. (14 Kasım'da son yer tutucu da
+kalktı; yer tutucu sayfa ve modeli silindi.)
 Kök adres ayrı bir sayfa değil: girişli kullanıcı rolünün ilk ekranına, girişsiz kullanıcı giriş
 sayfasına gidiyor (tasarımda ilk ekran giriş/kayıt). 6 Kasım'daki şube listesi ana sayfadan kalktı,
 şubeler 14 Kasım'da yönetim panelinde görünecek.
@@ -694,6 +695,55 @@ aralıklarını, asistan sadece kendi şubesindeki aralığı görüyor (`User.A
 hesabı ve özet (randevu, onay bekleyen, boş süre) Core'da ve veritabanı olmadan test ediliyor; ekran sadece
 çiziyor. Ret, iptal ve silme, hasta tarafındaki iptal gibi önce sayfada bir onay ya da gerekçe adımı açıyor
 (`?reject=`, `?cancel=`, `?delete=`); JavaScript gerekmiyor.
+
+### Yönetici panelini kodlarken verilen kararlar (14 Kasım)
+
+**K54 – `CanManageCatalog` → `CanManageChain`: zincir geneli kayıtlar tek soru.**
+Yönetici panelinde üç işlem "sadece zincir yöneticisi" cevabını istedi: kataloğu değiştirmek, yeni şube açmak
+ve hekim kaydı (hekimin bütün şubeler için ortak bilgileri, K34). Üçü için ayrı özellik açsaydım her rolde aynı
+cevabı veren üç metot olurdu; K27'de `CanRecordOutcome` açmamamın gerekçesi de buydu. Bu yüzden 7 Kasım'daki
+`CanManageCatalog`'un adını genişlettim. Şube yöneticisinin yetkisi ise `CanManageBranch(şube)` ile kalıyor:
+saatler, bölümler, ünit sayısı, şubeye hekim atama/çıkarma ve asistan hesabı. Servisler (`BranchAdministrationService`,
+`CatalogService`, `StaffService`) bu iki çok biçimli sorudan başka bir yetki kuralı yazmıyor; "Şubem" ekranında
+sadece kendi şubesinin görünmesi de listenin `CanManageBranch` ile süzülmesinden geliyor. Başka şubenin numarası
+adrese yazılırsa cevap "Şube bulunamadı" (K46'daki gerekçeyle).
+*Alternatif:* `CanOpenBranch`, `CanRegisterDentist` gibi ayrı yetkiler. Bir gün "şube açabilen ama kataloğa
+dokunamayan" bir rol çıkarsa ayrılır; bugün bütün rollerde aynı cevabı veriyorlar.
+
+**K55 – Personel hesabı geçici parolayla açılıyor; parola aynı cevapta bir kez gösteriliyor.**
+Parola `TemporaryPassword` ile kriptografik üreteçten (`RandomNumberGenerator`) 10 karakter olarak üretiliyor;
+birbirine karışan karakterler (0/O, 1/l/I) yok, çünkü yönetici ekrandan okuyup personele söyleyecek.
+Veritabanına sadece özeti yazılıyor (K15). Hesap açıldıktan sonra yönlendirme yapmıyorum, sayfa parolayla
+birlikte aynı cevapta çiziliyor. Yönlendirme olsaydı parolayı bir sonraki isteğe taşımak için TempData çerezine
+yazmak gerekirdi; parola şifreli de olsa tarayıcıda bir çerezde dolaşmasın istedim. Bedeli, sayfa yenilenirse
+formun tekrar gönderilmesi; bu durumda e-posta artık kullanıldığı için "bu e-postayla hesap var" hatası
+çıkıyor, ikinci hesap açılmıyor. İlk girişte parola değiştirme zorunlu değil (K36).
+*Alternatif:* parolayı yöneticinin belirlemesi. Yönetici herkese aynı kolay parolayı verme eğiliminde olur.
+
+**K56 – Çalışma saati daraltılırken dışarıda kalan müsaitlik varsa kayıt reddediliyor; kayıt "ya hep ya hiç".**
+K24'te bıraktığım kontrol `BranchAdministrationService.UpdateAsync`'te: o şubede çalışan hekimlerin bu şubedeki
+her aralığı yeni saate tamamen sığmalı (aralık eklerken kullanılan `TimeOfDayRange.Contains` sorusunun aynısı);
+gün kapatılırsa o günün bütün aralıkları dışarıda sayılıyor. Mesaj ilk aralığı hekimin adıyla söylüyor ve
+toplam sayıyı ekliyor. Aynı formda ad, il, ünit sayısı, yedi günün saati ve bölümler var; bunlardan biri kurala
+takılırsa hiçbiri değişmesin diye önce bütün kontroller yapılıyor, şubenin kendi kuralları (ad boş olamaz, en az
+bir ünit) da asıl nesneye dokunmadan önce geçici bir `Branch` nesnesiyle deneniyor. Hizmet formunda ve hekim
+kaydında da aynı yolu izledim; hekimin şubelerinden çıkarılırken reddedilebilecek olanlar (aralığı olanlar)
+öne alınıyor ki ilk çağrı listeye dokunmadan hata versin.
+*Alternatif:* saati daraltıp dışarıda kalan aralıkları otomatik kırpmak ya da silmek. Hekimin haberi olmadan
+takvimi değişir ve o aralıktaki ileri tarihli randevular (K52) "müsait değil" kuralını çiğner hale gelirdi.
+
+**K57 – Bölüm kaldırma, ünit azaltma ve hizmet değişikliği alınmış randevulara dokunmuyor.**
+Şubeden bir bölüm kaldırılınca ya da ünit sayısı azaltılınca yeni randevular yeni ayarla kontrol ediliyor;
+daha önce alınmış randevular olduğu gibi kalıyor (alındıkları an kurallara uyuyorlardı). Hizmetin ücreti ve
+süresi değişince de eski randevu kendi kopyasını koruyor (K9); katalog ekranı bunu düzenleme formunda yazıyor
+ve kayıttan sonra "Ücret 5.000 ₺ → 5.500 ₺ oldu" mesajı gösteriyor. Aynı adla ikinci bölüm, şube ya da aynı
+bölümde aynı adla ikinci hizmet açılamıyor; karşılaştırma Türkçe harf kurallarıyla (`TurkishNames.SameName`;
+"İMPLANT" ile "implant" aynı). Veritabanında benzersiz indeks zaten var (K37); servis bakmasa da kayıt
+reddedilirdi ama kullanıcı anlamlı bir mesaj yerine hata sayfası görürdü.
+*Bilerek yapılmayanlar:* bölüm, hizmet ve şube silme (geçmiş randevular bunlara bağlı, K38'de `Restrict`);
+personelin telefon numarası (tasarımda isteğe bağlı alan olarak vardı ama sistemde hiçbir yerde kullanılmıyor,
+eklemek bir sütun ve migration demekti); asistan hesabını düzenleme ve kapatma. Üçü de ödevin istediği
+"kayıt" maddesinin dışında; eklenecekse aynı servislerin yeni metotları olur.
 
 ## 5. İlk sınıf taslağı
 

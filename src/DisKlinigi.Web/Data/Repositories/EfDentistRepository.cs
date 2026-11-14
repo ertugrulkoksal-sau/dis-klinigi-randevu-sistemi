@@ -32,6 +32,9 @@ public class EfDentistRepository : IDentistRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Dentist>> GetAllAsync(CancellationToken cancellationToken = default) =>
+        await WithParts(_db.Dentists).OrderBy(d => d.FullName).ToListAsync(cancellationToken);
+
     /// <remarks>
     /// Silinen müsaitlik aralığı hekimin listesinden çıkınca EF Core onu sahipsiz kayıt olarak görüp
     /// siliyor (ilişki zorunlu ve <c>Cascade</c>, <c>UserConfiguration</c>); ayrıca silme komutu gerekmiyor.
