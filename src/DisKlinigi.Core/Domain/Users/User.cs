@@ -8,7 +8,7 @@ namespace DisKlinigi.Core.Domain.Users;
 /// biri yok, herkes hasta, hekim, asistan ya da yöneticidir.
 /// </summary>
 /// <remarks>
-/// Yetki soruları (<see cref="CanManageBranch"/>, <see cref="CanManageCatalog"/>,
+/// Yetki soruları (<see cref="CanManageBranch"/>, <see cref="CanManageChain"/>,
 /// <see cref="CanApprove"/>, <see cref="CanCancel"/>) her alt sınıfta kendi kuralıyla
 /// cevaplanıyor (çok biçimlilik). Controller'lar ve randevu durumları "rol şu mu?"
 /// diye bakmak yerine bu metotları çağırıyor; böylece yetki kuralı tek yerde,
@@ -51,8 +51,16 @@ public abstract class User : Entity
     /// <summary>Bu kullanıcı verilen şubenin çalışma saatlerini, bölümlerini, ünit sayısını ve personelini yönetebilir mi?</summary>
     public abstract bool CanManageBranch(Branch branch);
 
-    /// <summary>Zincir genelindeki bölüm ve hizmet kataloğunu değiştirebilir mi? Varsayılan cevap hayır.</summary>
-    public virtual bool CanManageCatalog => false;
+    /// <summary>
+    /// Zincir genelindeki kayıtları değiştirebilir mi: bölüm ve hizmet kataloğu, yeni şube açma, hekim kaydı ve
+    /// hekimin bütün şubeler için ortak bilgileri (uzmanlık, hizmetler, e-posta; K34). Varsayılan cevap hayır.
+    /// </summary>
+    /// <remarks>
+    /// İlk halinde adı <c>CanManageCatalog</c>'du. Yönetici panelinde (14 Kasım) şube açma ve hekim kaydı da
+    /// aynı soruyu sordu ve her rolde aynı cevabı verdi; üç ayrı özellik açmak yerine (K27'deki gerekçeyle) adını
+    /// genişlettim (K54).
+    /// </remarks>
+    public virtual bool CanManageChain => false;
 
     /// <summary>
     /// Bu kullanıcı randevuyu onaylayıp reddedebilir ve sonucunu (tamamlandı/gelmedi)

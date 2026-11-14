@@ -27,6 +27,9 @@ internal sealed class InMemoryDentistRepository : IDentistRepository
     public Task<IReadOnlyList<Dentist>> GetWorkingAtAsync(Branch branch, CancellationToken cancellationToken = default) =>
         Task.FromResult<IReadOnlyList<Dentist>>(_dentists.Where(d => d.WorksAt(branch)).OrderBy(d => d.FullName).ToList());
 
+    public Task<IReadOnlyList<Dentist>> GetAllAsync(CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlyList<Dentist>>(_dentists.OrderBy(d => d.FullName).ToList());
+
     public Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         SaveCount++;

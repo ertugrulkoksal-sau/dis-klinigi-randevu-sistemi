@@ -23,6 +23,9 @@ public interface IDentistRepository
     /// </summary>
     Task<IReadOnlyList<Dentist>> GetWorkingAtAsync(Branch branch, CancellationToken cancellationToken = default);
 
-    /// <summary>Yüklenmiş hekimde yapılan değişiklikleri (müsaitlik aralığı ekleme/silme) kaydeder.</summary>
+    /// <summary>Zincirdeki bütün hekimler bütün parçalarıyla, ada göre sıralı (hekim kaydı ekranı, şubeye hekim atama listesi).</summary>
+    Task<IReadOnlyList<Dentist>> GetAllAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Yüklenmiş hekimde yapılan değişiklikleri (müsaitlik aralığı, şube ataması, ortak bilgiler) kaydeder.</summary>
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }

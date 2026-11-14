@@ -1,8 +1,9 @@
+using DisKlinigi.Core.Domain;
 using DisKlinigi.Core.Domain.Users;
 
 namespace DisKlinigi.Core.Abstractions;
 
-/// <summary>Kullanıcı verisine erişim: giriş, kayıt ve oturum kontrolü için gereken üç işlem (K17).</summary>
+/// <summary>Kullanıcı verisine erişim: giriş, kayıt, oturum kontrolü ve şube personeli listesi (K17).</summary>
 /// <remarks>
 /// Dönen nesne kullanıcının gerçek sınıfı (<see cref="Patient"/>, <see cref="Dentist"/>...);
 /// yetki soruları (<c>CanApprove</c>, <c>CanManageBranch</c>) bu sınıfta cevaplandığı için tür
@@ -14,6 +15,9 @@ public interface IUserRepository
     Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default);
 
     Task<User?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+
+    /// <summary>Şubeye bağlı asistanlar, ada göre sıralı (şube personeli ekranı).</summary>
+    Task<IReadOnlyList<Assistant>> GetAssistantsAtAsync(Branch branch, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Kullanıcıyı kaydeder. E-posta başka bir hesapta kullanılıyorsa kaydetmeden <c>false</c> döner.
