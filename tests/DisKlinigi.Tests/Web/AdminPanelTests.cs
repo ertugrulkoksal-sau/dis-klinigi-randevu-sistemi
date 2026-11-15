@@ -104,6 +104,29 @@ public partial class AdminPanelTests
     }
 
     [Fact]
+    public async Task Yeni_hizmet_eklenince_sonraki_sayfada_eklendi_mesaji_gorunur()
+    {
+        int prosthetics;
+        await using (var db = _factory.CreateDbContext())
+            prosthetics = await db.Departments.Where(d => d.Name == "Protetik Diş Tedavisi").Select(d => d.Id).SingleAsync();
+        var browser = await LoginAsync(ChainAdmin);
+
+        var post = await browser.PostFormAsync("/Admin/Catalog?newService=true", "/Admin/SaveService", new Dictionary<string, string>
+        {
+            ["Form.Name"] = "Gece plağı",
+            ["Form.DepartmentId"] = prosthetics.ToString(),
+            ["Form.DurationMinutes"] = "20",
+            ["Form.Price"] = "1200",
+            ["Form.RequiresApproval"] = "false"
+        });
+
+        // Ücret değişmeyen kayıtta sadece başlık var; 15 Kasım'a kadar ortak düzen başlığı tek başına göstermiyordu.
+        Assert.Equal("/Admin/Catalog", post.RedirectTarget());
+        var page = WebUtility.HtmlDecode(await browser.GetStringAsync(post.RedirectTarget()));
+        Assert.Contains("Gece plağı eklendi.", page);
+    }
+
+    [Fact]
     public async Task Sube_yoneticisi_asistan_acar_gecici_parola_bir_kez_gorunur_ve_girise_yarar()
     {
         var serdivan = await BranchIdAsync("Serdivan Şubesi");

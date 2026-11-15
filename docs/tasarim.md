@@ -379,7 +379,8 @@ oluşturmasını sağlamayı düşündüm; ama örnek veride geçmiş tarihli ra
 atlamamak uygulama katmanında planlayıcıyı kullanmakla sağlanıyor.
 
 **Ret gerekçesi** isteğe bağlı olarak saklanıyor; arayüz tasarımındaki 3. küçük karar
-("reddederken gerekçe yazılıyor") onaylanırsa ekranda zorunlu alan yapılacak.
+("reddederken gerekçe yazılıyor") onaylanırsa ekranda zorunlu alan yapılacak. (Tasarım onaylandı;
+13 Kasım'da gerekçe ekranda ve serviste zorunlu oldu, alan sınıfında isteğe bağlı kaldı: K51.)
 
 ### Çakışma kontrolünü kodlarken verilen kararlar (9 Kasım)
 
@@ -835,8 +836,9 @@ classDiagram
 ## 6. Ekranlar
 
 Ekranlar kod yazılmadan önce tasarlandı (7 Kasım), bağımsız bir incelemeden
-sonra düzeltildi (9 Kasım) ve onaya sunuldu.
-Ekran görüntüleri, ekranların ayrıntılı listesi ve onay durumu: [arayuz-tasarimi.md](arayuz-tasarimi.md).
+sonra düzeltildi ve onaylandı (9 Kasım), 11–14 Kasım'da kodlandı.
+Ekran görüntüleri, ekranların ayrıntılı listesi, kodlanma durumu ve tasarımdan ayrıldığım noktalar:
+[arayuz-tasarimi.md](arayuz-tasarimi.md).
 
 1. Giriş ve hasta kaydı
 2. Hasta: randevu alma akışı (şube → bölüm → hizmet → hekim → tarih/saat → özet ve onay)
