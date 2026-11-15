@@ -60,10 +60,16 @@
     </header>
 
     <main role="main" class="page">
-        @if (TempData["Status"] is string status)
+        @{
+            // İkisi de her istekte okunuyor: sadece başlık yazan işlem de (hizmet kaydı) mesaj gösteriyor,
+            // okunmayan başlık TempData'da kalıp sonraki bir mesaja karışmıyor.
+            var status = TempData["Status"] as string;
+            var statusTitle = TempData["StatusTitle"] as string;
+        }
+        @if (status is not null || statusTitle is not null)
         {
             <div role="status" class="status-message">
-                @if (TempData["StatusTitle"] is string statusTitle)
+                @if (statusTitle is not null)
                 {
                     <strong>@statusTitle</strong>
                 }
