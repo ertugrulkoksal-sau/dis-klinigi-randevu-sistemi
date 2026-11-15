@@ -5,11 +5,11 @@ yapılıyor. Onaylanan ekranların görüntüleri [arayuz/](arayuz/) klasöründ
 "Ekran tasarımları" bölümünde.
 
 **Onay durumu: onaylandı** (9 Kasım 2026, revizyon 1). 7 Kasım'da onaya sunuldu, 9 Kasım'da
-bağımsız inceleme sonrası düzeltildi ve bu haliyle onaylandı. Ekranlar 11 Kasım'dan itibaren
-bu revizyona göre kodlanacak.
+bağımsız inceleme sonrası düzeltildi ve bu haliyle onaylandı. Ekranların hepsi 11–14 Kasım'da
+bu revizyona göre kodlandı (aşağıda "Kodlanma durumu").
 
-Onaydan sonra yapılacak tasarım değişiklikleri de önce ekran tasarımlarında gösterilip sonra koda
-uygulanacak.
+Onaydan sonra tasarımın kendisi değişmedi; kodlarken bilerek ayrıldığım küçük noktaları gerekçeleriyle
+"Kodlanma durumu" bölümündeki tabloya yazdım.
 
 ## Ekranlar
 

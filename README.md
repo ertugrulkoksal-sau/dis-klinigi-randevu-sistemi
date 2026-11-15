@@ -104,10 +104,7 @@ mevcut veri korunuyor.
 veritabanının oluşturulduğu güne göre yerleşiyor: iki hafta öncesinden iki hafta sonrasına kadar,
 bugün dahil, her durumdan (onay bekliyor, onaylandı, reddedildi, iptal edildi, tamamlandı, gelmedi)
 randevu oluyor (tasarım kararı K39). Sunumdan önce veritabanını silip yeniden oluşturmak,
-randevuların sunum gününe göre dizilmesini sağlıyor.
-
-> 10 Kasım'dan önce oluşmuş bir veritabanında sadece üç şube vardı. Yeni örnek veri için
-> uygulamayı durdurup veritabanı dosyasını silin (aşağıdaki tabloda "Örnek veriye sıfırdan dönmek").
+randevuların sunum gününe göre dizilmesini sağlıyor (yukarıdaki tabloda "Örnek veriye sıfırdan dönmek").
 
 ### Örnek hesaplar
 

@@ -36,6 +36,24 @@ Her günün sonunda şu başlıklarla kısa bir özet yazılıyor:
 | 14 Kas Cmt | `feature/yonetici-paneli` | Yönetici paneli: şube, çalışma saatleri, bölüm, hizmet, personel; şube yöneticisinin sadece kendi şubesini görmesi. README'nin son hali: SOLID tablosu, tasarım kararları özeti, eşleme tablosunun tamamı. Merge sonrası **teslim .zip'i**. | Şube yöneticisi hesabıyla başka şubeye erişememe; .zip açılıp `dotnet run` ile çalışıyor. |
 | 15 Kas Paz | `docs/son-duzeltmeler` | Sadece belge ve küçük düzeltmeler; temiz klonla deneme; .zip son haliyle yeniden üretilir. SABİS'e yükleme (23:59'dan önce). | Temiz klasörde `dotnet run` ve `dotnet test`. |
 
+## Gerçekleşen
+
+Plan günü gününe uygulandı; her günün işi o gün commit'lenip Pull Request'le `main`'e birleştirildi.
+9 ve 11 Kasım'daki ek PR'lar ekran tasarımlarının revizyonu, onayı ve görüntüleri için.
+
+| Gün | Pull Request |
+|---|---|
+| 6 Kas | [#1](https://github.com/ertugrulkoksal-sau/dis-klinigi-randevu-sistemi/pull/1), [#2](https://github.com/ertugrulkoksal-sau/dis-klinigi-randevu-sistemi/pull/2) |
+| 7 Kas | [#3](https://github.com/ertugrulkoksal-sau/dis-klinigi-randevu-sistemi/pull/3) |
+| 8 Kas | [#4](https://github.com/ertugrulkoksal-sau/dis-klinigi-randevu-sistemi/pull/4) |
+| 9 Kas | [#5](https://github.com/ertugrulkoksal-sau/dis-klinigi-randevu-sistemi/pull/5), [#6](https://github.com/ertugrulkoksal-sau/dis-klinigi-randevu-sistemi/pull/6), [#7](https://github.com/ertugrulkoksal-sau/dis-klinigi-randevu-sistemi/pull/7) |
+| 10 Kas | [#8](https://github.com/ertugrulkoksal-sau/dis-klinigi-randevu-sistemi/pull/8) |
+| 11 Kas | [#9](https://github.com/ertugrulkoksal-sau/dis-klinigi-randevu-sistemi/pull/9), [#10](https://github.com/ertugrulkoksal-sau/dis-klinigi-randevu-sistemi/pull/10) |
+| 12 Kas | [#11](https://github.com/ertugrulkoksal-sau/dis-klinigi-randevu-sistemi/pull/11) |
+| 13 Kas | [#12](https://github.com/ertugrulkoksal-sau/dis-klinigi-randevu-sistemi/pull/12) |
+| 14 Kas | [#13](https://github.com/ertugrulkoksal-sau/dis-klinigi-randevu-sistemi/pull/13) |
+| 15 Kas | `docs/son-duzeltmeler`: belge düzeltmeleri, temiz klonla ve teslim .zip'iyle son deneme |
+
 **Teslimden sonra (Aralık başına kadar):** 10–12 slaytlık sunum (konuşma notlarıyla),
 5 dakikalık canlı demo senaryosu ve olası sorulara kısa cevaplar. Sunum Mac'te açılabilir formatta.
 
