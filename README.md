@@ -200,7 +200,7 @@ Ders kapsamındaki genel beklentiler:
 | Soyutlama | `IBookingRule`, repository arayüzleri (`IAppointmentRepository`, `IDentistRepository`, `IBranchRepository`, `ICatalogRepository`, `IUserRepository`), `IPasswordHasher`, `TimeProvider` |
 | SOLID ve tasarım desenleri | Aşağıdaki "SOLID" ve "Kullanılan desenler" tabloları |
 | UML | Aşağıda üç sınıf ve üç sıra diyagramı (Mermaid, koddan çıkarıldı); ilk taslak tasarim.md bölüm 5'te |
-| Birim testleri | 519 test (xUnit, `dotnet test`): çakışma kuralları ve sınır durumları, ünit kapasitesinde en yüksek eş zamanlılık, durum geçiş tablosunun her hücresi, yetki tabloları, zamana bağlı kurallar `FakeTimeProvider` ile; SQLite üzerinde eşleme ve eş zamanlılık; uygulamanın kendisi üzerinden rol × sayfa erişimi ve ekran akışları |
+| Birim testleri | 520 test (xUnit, `dotnet test`): çakışma kuralları ve sınır durumları, ünit kapasitesinde en yüksek eş zamanlılık, durum geçiş tablosunun her hücresi, yetki tabloları, zamana bağlı kurallar `FakeTimeProvider` ile; SQLite üzerinde eşleme ve eş zamanlılık; uygulamanın kendisi üzerinden rol × sayfa erişimi ve ekran akışları |
 | Kurulum belgesi | Yukarıda "Kurulum ve çalıştırma" (macOS adımları dahil) |
 
 ## UML diyagramları
