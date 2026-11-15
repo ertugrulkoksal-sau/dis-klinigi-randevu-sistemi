@@ -104,6 +104,11 @@
     <section id="hekimFormu" class="panel" aria-labelledby="formBaslik">
         <h2 id="formBaslik" class="section-title">@(editing is null ? "Yeni hekim" : $"Hekimi düzenle: {editing.FullName}")</h2>
         <form asp-action="SaveDentist" asp-route-id="@editing?.Id" method="post" class="stack" novalidate>
+            @* Hata formun başında: form uzun (hizmetler, şubeler), Kaydet'in yanındaki mesaj ilk ekranda görünmüyordu. *@
+            @if (Model.Error is { } error)
+            {
+                <div class="form-error" role="alert">@error</div>
+            }
             <div class="field">
                 <label asp-for="Form.FullName" class="form-label"></label>
                 <input asp-for="Form.FullName" class="form-control" autocomplete="off" />
@@ -154,10 +159,6 @@
                     ? "Hesap açılınca geçici parola bir kez gösterilir. Müsaitlik aralıklarını hekim kendisi girer."
                     : "Hekimin müsaitlik aralığı olan şubeden çıkarılması reddedilir; önce o şubedeki aralıkların silinmesi gerekir.")
             </div>
-            @if (Model.Error is { } error)
-            {
-                <div class="form-error" role="alert">@error</div>
-            }
             <div class="form-actions form-actions-end">
                 <a asp-action="Dentists" class="btn btn-outline-secondary btn-touch">Vazgeç</a>
                 <button type="submit" class="btn btn-primary btn-touch">Hekimi kaydet</button>

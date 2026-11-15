@@ -76,6 +76,12 @@ else
         }
 
         <form asp-action="SaveBranch" asp-route-id="@selected.Id" method="post" class="stack" novalidate>
+            @* Kayıt reddedilince sayfa en üstten açılıyor; mesaj Kaydet'in yanında kalırsa uzun formda görünmüyordu. *@
+            <div asp-validation-summary="ModelOnly" class="form-error" role="alert"></div>
+            @if (Model.Error is { } error)
+            {
+                <div class="form-error" role="alert">@error</div>
+            }
             <section class="panel" aria-labelledby="bilgiBaslik">
                 <h2 id="bilgiBaslik" class="section-title">Şube bilgileri</h2>
                 <div class="field-grid">
@@ -162,11 +168,6 @@ else
                 <p class="hint">Hastalar bir şubede sadece buradaki bölümlerin hizmetlerine randevu alabilir.</p>
             </section>
 
-            <div asp-validation-summary="ModelOnly" class="form-error" role="alert"></div>
-            @if (Model.Error is { } error)
-            {
-                <div class="form-error" role="alert">@error</div>
-            }
             <div class="form-actions form-actions-end">
                 <a asp-action="Branches" asp-route-id="@selected.Id" class="btn btn-outline-secondary btn-touch">Vazgeç</a>
                 <button type="submit" class="btn btn-primary btn-touch">Kaydet</button>

@@ -108,7 +108,13 @@
         {
             <section id="hizmetFormu" class="panel" aria-labelledby="formBaslik">
                 <h2 id="formBaslik" class="section-title">@(Model.Editing is null ? "Yeni hizmet" : $"Hizmeti düzenle: {Model.Editing.Name}")</h2>
-                <form asp-action="SaveService" asp-route-id="@Model.Editing?.Id" method="post" class="stack" novalidate>
+                @* Form hizmet tablosunun altında; gönderimden sonra sayfa forma kaysın, hata da formun başında olsun.
+                   Kayıt başarılıysa yönlendirilen sayfada form olmadığı için sayfa üstten açılıyor. *@
+                <form asp-action="SaveService" asp-route-id="@Model.Editing?.Id" asp-fragment="hizmetFormu" method="post" class="stack" novalidate>
+                    @if (Model.FormError is { } error)
+                    {
+                        <div class="form-error" role="alert">@error</div>
+                    }
                     <div class="field-grid">
                         <div class="field">
                             <label asp-for="Form.Name" class="form-label"></label>
@@ -148,10 +154,6 @@
                             Şu anki ücret @Display.Price(current.Price). Ücret değişirse daha önce alınmış randevular kendi ücretini korur;
                             yeni ücret sadece bundan sonraki randevulara uygulanır.
                         </div>
-                    }
-                    @if (Model.FormError is { } error)
-                    {
-                        <div class="form-error" role="alert">@error</div>
                     }
                     <div class="form-actions form-actions-end">
                         <a asp-action="Catalog" class="btn btn-outline-secondary btn-touch">Vazgeç</a>
